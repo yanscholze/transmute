@@ -35,7 +35,7 @@ PyInstaller inclui intérprete, dependências, módulos UI e perfil original. O 
 
 Cada release usa diretório timestamped em dist, preservando releases anteriores. O script testa o próprio binário com --self-test e --smoke-test e verifica integridade do ZIP. SHA256.json registra o conteúdo do pacote. Logs de build não comprovam execução em outro sistema.
 
-Build Windows exige Windows. Workflow `.github/workflows/build.yml` contém matriz Windows/Linux e pode ser disparado manualmente em um repositório GitHub. O workflow foi enviado à branch build/installers-1.2.0 e disparado com autorização do usuário. O payload Linux destinado ao RPM é compilado no Ubuntu 22.04 (glibc 2.35), para não exigir a glibc mais recente da máquina Fedora de desenvolvimento. Compatibilidade com outras distribuições/versões de glibc requer execução correspondente.
+Build Windows exige Windows. Workflow `.github/workflows/build.yml` contém matriz Windows/Linux e pode ser disparado manualmente em um repositório GitHub. O workflow foi enviado à branch build/installers-1.2.0 e disparado com autorização do usuário. O RPM usa payload compilado nativamente no Fedora 44 (glibc 2.43); a receita declara esse mínimo. O ZIP do job Ubuntu é uma distribuição independente: no teste de compatibilidade, seu backend Qt/xcb falhou no Fedora, e ele não foi usado no RPM final. Compatibilidade com outras distribuições requer execução correspondente.
 
 ## Estrutura portátil
 

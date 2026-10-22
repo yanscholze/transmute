@@ -4,10 +4,9 @@ import sys
 import traceback
 from pathlib import Path
 
-from app.main import main
-
 if __name__ == "__main__":
     try:
+        from app.main import main
         result = main()
     except Exception:
         if not ({"--self-test", "--smoke-test"} & set(sys.argv)):

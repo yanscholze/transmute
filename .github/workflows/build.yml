@@ -24,6 +24,7 @@ jobs:
       - run: python -c "from pathlib import Path; Path('.local').mkdir(exist_ok=True)"
       - run: python -m pytest --basetemp=.local/test-tmp -q
       - run: python -m ruff check app scripts tests
+      - run: python run.py --self-test --self-test-report .local/source-selftest.json
       - run: python scripts/build.py
       - name: Instalar compilador NSIS no Windows
         if: runner.os == 'Windows'
