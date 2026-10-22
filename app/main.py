@@ -46,6 +46,8 @@ def main():
         from app.ui.window import Window
         window = Window(root, state, LocalStore(state))
     except Exception as error:
+        if args.smoke_test:
+            raise  # Unattended checks must fail instead of waiting for a dialog.
         QMessageBox.critical(None, "Não foi possível abrir", str(error))
         return 1
     window.show()

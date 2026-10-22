@@ -494,7 +494,8 @@ Execute com o Python do .venv no SO alvo. PyInstaller não faz cross-compilation
 Cada release ganha diretório novo; versões anteriores não são apagadas.
 
 - `archive_path` (linha 26): Append extension: version dots are not a filesystem suffix to replace.
-- `build` (linha 31)
+- `validate_binary` (linha 31): Surface frozen GUI tracebacks even when Windows has no console.
+- `build` (linha 44)
 
 ## scripts/document_code.py
 

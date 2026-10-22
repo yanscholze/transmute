@@ -28,6 +28,19 @@ def archive_path(directory):
     return directory.with_name(directory.name + ".zip")
 
 
+def validate_binary(command, release, env, timeout):
+    """Surface frozen GUI tracebacks even when Windows has no console."""
+    diagnostic = Path(env["CONVERSOR_STATE_DIR"]) / "build-error.txt"
+    diagnostic.parent.mkdir(parents=True, exist_ok=True)
+    check_env = {**env, "CONVERSOR_DIAGNOSTIC_FILE": str(diagnostic)}
+    try:
+        subprocess.run(command, cwd=release, env=check_env, check=True, timeout=timeout)
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        if diagnostic.is_file():
+            print(diagnostic.read_text(encoding="utf-8"))
+        raise
+
+
 def build(library=None):
     system = platform.system()
     name = f"Transmute-{__version__}-{system}-{platform.machine()}-{datetime.now():%Y%m%d-%H%M%S}"
@@ -99,8 +112,8 @@ def build(library=None):
     # Test the packed executable with no project interpreter dependency.
     test_env = {**env, "CONVERSOR_STATE_DIR": str(ROOT / ".local/build-validation" / name), "QT_QPA_PLATFORM": "offscreen"}
     if not library:
-        subprocess.run([str(release / executable), "--self-test"], cwd=release, env=test_env, check=True, timeout=60)
-    subprocess.run([str(release / executable), "--smoke-test"], cwd=release, env=test_env, check=True, timeout=30)
+        validate_binary([str(release / executable), "--self-test", "--self-test-report", str(Path(test_env["CONVERSOR_STATE_DIR"]) / "selftest.json")], release, test_env, 120)
+    validate_binary([str(release / executable), "--smoke-test"], release, test_env, 60)
     manifest = {str(p.relative_to(release)): digest(p) for p in release.rglob("*") if p.is_file()}
     (release / "SHA256.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
     archive = archive_path(release)
