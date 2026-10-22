@@ -95,12 +95,12 @@ Exportação textual e transacional: planejar antes, publicar só ao terminar.
 Partes vinculadas compartilham grupos; quando preservar ordem e vínculo é
 impossível, bloquear é mais seguro do que reorganizar silenciosamente.
 
-- `selected_lines` (linha 25)
-- `plan_parts` (linha 54): Planeje partes por grupo e prove monotonicidade em cada fonte.
-- `write_workbook` (linha 93): Derive cabeçalhos/estilos do modelo e escreva dados como texto literal.
-- `report_data` (linha 126)
-- `save_reports` (linha 159)
-- `export` (linha 181): Nunca sobrescreva fontes/saídas; em erro ou cancelamento retire o staging.
+- `selected_lines` (linha 26)
+- `plan_parts` (linha 55): Planeje partes por grupo e prove monotonicidade em cada fonte.
+- `write_workbook` (linha 94): Derive cabeçalhos/estilos do modelo e escreva dados como texto literal.
+- `report_data` (linha 127)
+- `save_reports` (linha 160)
+- `export` (linha 182): Nunca sobrescreva fontes/saídas; em erro ou cancelamento retire o staging.
 
 ## app/core/importers/__init__.py
 
@@ -196,7 +196,7 @@ precisam ser declaradas. Documentos inválidos são preservados para correção.
 
 Módulo da camada app.
 
-- `main` (linha 16)
+- `main` (linha 18)
 
 ## app/models.py
 
@@ -219,8 +219,8 @@ Contratos compartilhados: não dependem de Qt, HTTP ou armazenamento.
 
 Resolve diretório portátil e estado gravável, com override explícito do operador.
 
-- `project_root` (linha 7)
-- `state_root` (linha 13)
+- `project_root` (linha 8)
+- `state_root` (linha 14)
 
 ## app/selftest.py
 
@@ -238,6 +238,15 @@ Trabalhos aguardando/interrompidos não possuem resultado concluído e ficam for
 do denominador. A ausência de resultados produz None, nunca sucesso fictício.
 
 - `summarize` (linha 11)
+
+## app/storage/database.py
+
+Transação com fechamento determinístico, inclusive em erro e no Windows.
+
+O context manager de sqlite3.Connection faz commit/rollback, mas não fecha a
+conexão. closing externo evita deixar handles dependentes do coletor de lixo.
+
+- `database` (linha 11)
 
 ## app/storage/imports.py
 
@@ -257,8 +266,8 @@ perfis e configurações existentes na mesma base SQLite.
 
 Persistência mínima: histórico sem células, perfis estruturais e opções sem secrets.
 
-- `LocalStore` (linha 7)
-  Métodos: `__init__`:8, `connect`:18, `save_profile`:21, `profiles`:25, `delete_profile`:30, `record`:34, `history`:38, `clear_history`:42, `setting`:48, `set_setting`:53.
+- `LocalStore` (linha 8)
+  Métodos: `__init__`:9, `connect`:19, `save_profile`:22, `profiles`:26, `delete_profile`:31, `record`:35, `history`:39, `clear_history`:43, `setting`:49, `set_setting`:54.
 
 ## app/storage/workspace.py
 
@@ -324,7 +333,7 @@ podem ser copiados ou abertos localmente; o editor continua na Biblioteca.
 - `PathAccess` (linha 36)
   Métodos: `__init__`:37, `configure`:59, `copy_path`:69, `open_folder`:74.
 - `Dashboard` (linha 83)
-  Métodos: `__init__`:84, `panel_box`:112, `link`:118, `make_recent`:123, `make_launch`:141, `make_shortcuts`:186, `row`:201, `make_models`:225, `make_rules`:240, `refresh`:255.
+  Métodos: `__init__`:84, `panel_box`:113, `link`:119, `make_recent`:124, `make_launch`:142, `make_shortcuts`:187, `row`:202, `make_models`:226, `make_rules`:241, `refresh`:256.
 
 ## app/ui/file_settings.py
 
@@ -484,12 +493,37 @@ Build nativo e pacote portátil, sem copiar estado, secrets ou exemplos.
 Execute com o Python do .venv no SO alvo. PyInstaller não faz cross-compilation.
 Cada release ganha diretório novo; versões anteriores não são apagadas.
 
-- `build` (linha 25)
+- `build` (linha 26)
 
 ## scripts/document_code.py
 
 Gera índice auditável de todos os símbolos Python sem importar o aplicativo.
 
+
+## scripts/package_installers.py
+
+Cria instaladores a partir de ZIPs nativos já validados, sem estado pessoal.
+
+Windows: execute no runner Windows com NSIS; Linux: execute com rpmbuild.
+O conteúdo é extraído em staging novo e todos os hashes/modelos são conferidos.
+Arquivos finais nunca substituem uma release existente silenciosamente.
+
+- `write_manifest` (linha 26)
+- `prepare_payload` (linha 31): Only native binaries and blank templates are admitted into an installer.
+- `nsis_escape` (linha 67)
+- `windows_installer` (linha 71)
+- `rpm_installer` (linha 88)
+- `main` (linha 108)
+
+## scripts/validate_installer.py
+
+Valida instalação, execução e remoção do EXE no Windows nativo do CI.
+
+Não aceita Wine nem executa em outro sistema. Diretórios/estado são isolados no
+checkout do runner e nenhum perfil real é importado. Desinstalar deve conservar
+o sentinela de dados fora da pasta da aplicação.
+
+- `validate` (linha 22)
 
 ## scripts/validate_release.py
 
@@ -564,6 +598,14 @@ Dashboard usa metadados reais e não inventa taxa, atividade ou estado externo.
 - `test_sidebar_expansion_navigation_search_and_paths` (linha 62)
 - `test_light_dark_custom_accent_keeps_sessions_and_creates_previews` (linha 108)
 - `test_appearance_draft_and_save_remain_accessible_in_small_window` (linha 158)
+
+## tests/test_distribution.py
+
+Contratos de instalação e encerramento SQLite, independentes do SO do teste.
+
+- `test_database_closes_on_success_and_rolls_back_on_error` (linha 14)
+- `test_installed_state_is_outside_app_and_override_wins` (linha 31)
+- `test_installer_rechecks_native_zip_and_blank_templates` (linha 48)
 
 ## tests/test_edges.py
 

@@ -6,6 +6,7 @@ on:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-22.04, windows-latest]
     runs-on: ${{ matrix.os }}
@@ -24,7 +25,21 @@ jobs:
       - run: python -m pytest --basetemp=.local/test-tmp -q
       - run: python -m ruff check app scripts tests
       - run: python scripts/build.py
+      - name: Instalar compilador NSIS no Windows
+        if: runner.os == 'Windows'
+        run: choco install nsis --version=3.11 -y --no-progress
+      - name: Criar e validar instalador Windows nativo
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem dist/Transmute-*-Windows-*.zip | Select-Object -First 1
+          python scripts/package_installers.py --windows-zip $zip.FullName --makensis "C:\Program Files (x86)\NSIS\makensis.exe"
+          $exe = Get-ChildItem dist/releases/*/*Setup.exe | Select-Object -First 1
+          python scripts/validate_installer.py $exe.FullName
       - uses: actions/upload-artifact@v4
         with:
           name: conversor-${{ runner.os }}
-          path: dist/*.zip
+          path: |
+            dist/*.zip
+            dist/releases/**/*.exe
+            dist/windows-native.png

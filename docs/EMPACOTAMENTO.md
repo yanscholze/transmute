@@ -1,5 +1,32 @@
 # Distribuição, atualizações e personalização
 
+## Instaladores 1.2
+
+O usuário aprovou o dashboard em 22/10/2026 e autorizou .exe/.rpm. Windows deve usar **Windows nativo**, sem Wine. `.github/workflows/build.yml` compila com Python/PyInstaller no runner Windows, cria Setup com NSIS e testa instalação silenciosa, hashes, self-test, abertura Qt e desinstalação preservando dados. O job Linux é independente (`fail-fast: false`). A execução do workflow não publica GitHub Release automaticamente.
+
+`scripts/package_installers.py` recebe um ZIP nativo produzido por build.py, verifica hashes, assinatura de formato PE/ELF e ausência de linhas nos modelos, adiciona o preset público de `packaging/brand.json` e `installation.json`, e cria novo instalador. Não lê estado pessoal, correções, credenciais ou importações reais. Arquivos finais ficam em `dist/releases/1.2.0/` e não são sobrescritos silenciosamente.
+
+Windows: executar `Transmute-1.2.0-Windows-x64-Setup.exe`. Instala para o usuário em `%LOCALAPPDATA%\Programs\Transmute`, com atalhos no menu Iniciar e desinstalador. Exige Windows 10/11 de 64 bits. Runtime é incluído; não exige Python ou Wine. Instalador não possui assinatura Authenticode neste projeto.
+
+Fedora: `sudo dnf install ./transmute-1.2.0-1.fc44.x86_64.rpm`. Arquivos imutáveis ficam em `/opt/transmute`, launcher em `/usr/bin/transmute` e atalho no menu de aplicativos. O RPM contém runtime Python/Qt; dependências gráficas do sistema são declaradas. É uma distribuição externa com runtime empacotado, não um pacote submetido ao repositório oficial Fedora. Campo LicenseRef-NotSpecified documenta a ausência de licença própria escolhida pelo titular, sem inventar uma licença para o código. Licenças das dependências continuam incluídas.
+
+`installation.json` seleciona estado por usuário: Windows `%LOCALAPPDATA%\Transmute`; Linux `${XDG_DATA_HOME:-~/.local/share}/transmute`. `CONVERSOR_STATE_DIR` continua tendo prioridade. Atualizar ou desinstalar não remove esses dados. O NSIS enumera somente arquivos da distribuição ao remover o programa; arquivos desconhecidos inseridos manualmente na instalação também não são apagados recursivamente. A distribuição ZIP continua portátil, com `.local` ao lado do executável.
+
+Para RPM, após obter o ZIP Linux nativo:
+
+```bash
+.venv/bin/python scripts/package_installers.py --linux-zip CAMINHO_DO_ZIP
+```
+
+Para Windows, execute no Windows com NSIS instalado:
+
+```powershell
+python scripts/package_installers.py --windows-zip CAMINHO_DO_ZIP --makensis "C:\Program Files (x86)\NSIS\makensis.exe"
+python scripts/validate_installer.py CAMINHO_DO_SETUP_EXE
+```
+
+`packaging/transmute.spec` desabilita strip do binário PyInstaller, preservando o runtime anexado. `packaging/windows.nsi` usa instalação por usuário. Receitas, preset e ícone são editáveis. Consulte VALIDACAO_FINAL.md para distinguir o que foi executado dos passos ainda pendentes.
+
 ## Build nativo
 
 Instale dependências de desenvolvimento no `.venv` e execute `python scripts/build.py` com esse Python. No Windows use `.venv\Scripts\python`; Linux usa `.venv/bin/python`.
@@ -26,7 +53,7 @@ O app não depende de código-fonte, ambiente Python externo ou antigos arquivos
 
 Modelos e regras podem ser escolhidos em Biblioteca mesmo se as referências padrão estiverem ausentes. Não renomeie executável/dependências internas para personalizar: use nome, cor global e logo em Aparência. Para uma distribuição pré-configurada, forneça modelos/regras desejados e `regras_perfil.json` aprovado ao lado do executável. Novas famílias desconhecidas devem permanecer genéricas até configuração explícita.
 
-Não redistribua a pasta `.local` de uma instalação em uso: pode conter base temporária, mapeamentos, referências privadas e configurações. Para levar apenas identidade/configuração, configure uma instalação limpa. Assinatura de código, instalador MSI/AppImage/DEB/RPM e atualização automática não estão implementados; o pacote portátil é a unidade de entrega.
+Não redistribua a pasta `.local` de uma instalação em uso: pode conter base temporária, mapeamentos, referências privadas e configurações. Para levar apenas identidade/configuração, configure uma instalação limpa. Os instaladores EXE/RPM são descritos acima; assinatura de código, MSI/AppImage/DEB e atualização automática permanecem fora desta entrega.
 
 ## Distribuição de outra biblioteca/marca
 

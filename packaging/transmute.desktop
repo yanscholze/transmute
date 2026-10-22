@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Transmute
+Comment=Conversor de planilhas e tabelas para importação
+Exec=transmute
+Icon=transmute
+Terminal=false
+Categories=Office;Utility;
+StartupNotify=true

@@ -1,5 +1,9 @@
 # Validação final — 22/10/2026
 
+## Distribuição 1.2 — validação em andamento
+
+O usuário aprovou a interface e autorizou os pacotes. A primeira execução Windows nativa encontrou handles SQLite abertos e 6 px de overflow no dashboard. A revisão fecha conexões deterministicamente e ajusta o espaçamento horizontal, sem alterar regras de negócio. **85 testes locais passaram**. O novo workflow executa Windows nativo, gera NSIS e verifica instalação/remoção com dados preservados. Resultados finais serão registrados após a execução. Nenhuma Release foi publicada automaticamente.
+
 ## Revisão do dashboard — fonte pronta para aprovação visual
 
 Em 22/10/2026, após a referência visual e a correção sobre temas, **82 testes passaram em 22,01 s** (68 anteriores + 14 casos/variações do dashboard). Lint passou, índice de símbolos foi regenerado e os **38 hashes originais** permanecem preservados. O self-test CSV/PDF/QtPdf da fonte passou. A abertura gráfica nativa Linux com saída automática também passou, além das verificações Qt offscreen.

@@ -31,3 +31,5 @@ PDFs em `tests/fixtures` são exclusivamente sintéticos, com grades/descritivos
 ## Validação manual antes de produção
 
 Execute em máquina Windows e Linux alvo; confira abertura, escala de tela, drag and drop, seleção de diretórios, CSV com acentos, base real autorizada, cofre do sistema e cancelamento. Valide relatórios e faça importação parcial no ERP. Requisitos do ERP ausentes na documentação precisam ser confirmados e adicionados ao perfil. Testes locais não provam aceitação do ERP nem disponibilidade de provedores externos.
+
+`test_distribution.py`: fechamento determinístico SQLite com rollback/handles liberados; estado instalado fora do programa com override explícito; staging com hashes, modelo vazio e recusa de ZIP inseguro. O workflow Windows executa a suíte nativamente e valida instalar, rodar e remover o Setup sem apagar dados.

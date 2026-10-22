@@ -92,6 +92,7 @@ class Dashboard(QScrollArea):
         self.grid = QGridLayout(self.canvas)
         self.grid.setContentsMargins(9, 9, 13, 15)
         self.grid.setSpacing(23)
+        self.grid.setHorizontalSpacing(18)
         self.grid.setColumnStretch(0, 5)
         self.grid.setColumnStretch(1, 3)
         self.grid.setColumnStretch(2, 3)

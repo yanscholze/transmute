@@ -78,3 +78,7 @@ O QSS define mínimos dos botões com layouts internos (`newImportTile`, `recent
 Não há undo/edição em massa de milhares de células na UI, treinamento de IA, reconciliação automática com catálogo de clientes/produtos, consulta automática de UF, OCR de PDF ou validação tributária externa. PDF suporta somente tabelas posicionais reconhecidas, com conferência obrigatória e limite de 500 páginas; layouts novos exigem validação própria. Casos não cobertos permanecem para revisão e regras adicionais, sem inventar dados. A memória SQLite temporária reduz RAM, mas exige espaço em disco proporcional à auditoria. Leitor HTML limita entrada a 64 MB.
 
 O índice completo de símbolos está em CODIGO.md. Os módulos são comentados nos pontos que concentram decisões de segurança, formato e ciclo de vida.
+
+## Distribuição instalada 1.2
+
+`storage/database.py` fecha conexões após commit/rollback. O contexto de sqlite3 sozinho não fecha handles, causando WinError 32 no Windows ao remover sessões. Todos os consumidores continuam usando `with connect() as db`. `installation.json` separa estado instalado por usuário; ZIPs mantêm o comportamento portátil. Receitas e validação ficam em packaging/, package_installers.py e validate_installer.py. Windows usa runner nativo, sem Wine.

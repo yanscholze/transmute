@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import sys
 from logging.handlers import RotatingFileHandler
@@ -9,6 +10,7 @@ from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from app.paths import project_root, state_root
+from app import __version__
 from app.storage.local import LocalStore
 from app.ui.style import STYLE
 
@@ -19,18 +21,21 @@ def main():
     parser.add_argument("--smoke-test", action="store_true", help="Abrir a interface e sair após 1 segundo")
     parser.add_argument("--screenshot", type=Path, help="Salvar captura da janela antes de sair no smoke test")
     parser.add_argument("--self-test", action="store_true", help="Executar conversão sintética local do pacote")
+    parser.add_argument("--self-test-report", type=Path, help="Gravar confirmação JSON após self-test bem-sucedido")
     args = parser.parse_args()
     root, state = args.root or project_root(), state_root()
     if args.self_test:
         from app.selftest import run
         run(root, state)
+        if args.self_test_report:
+            args.self_test_report.write_text(json.dumps({"status": "ok", "version": __version__, "checks": ["CSV", "PDF", "QtPdf", "XLSX", "zeros", "reports"]}), encoding="utf-8")
         return 0
     handler = RotatingFileHandler(state / "diagnostico.log", maxBytes=1024 * 1024, backupCount=2, encoding="utf-8")
     handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
     logger = logging.getLogger("conversor")
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
-    logger.info("application_start version=1.1.0")
+    logger.info("application_start version=%s", __version__)
     app = QApplication.instance() or QApplication(sys.argv[:1])
     app.setApplicationName("Conversor de Bases")
     app.setOrganizationName("ConversorLocal")

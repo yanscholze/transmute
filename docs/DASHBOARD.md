@@ -2,7 +2,7 @@
 
 ## Referência e escopo
 
-A referência visual enviada pelo usuário define o shell: cabeçalho em cápsulas, fundo neutro, navegação lateral isolada, grandes painéis arredondados com sombras suaves e blocos de ação. O laranja é apenas um exemplo. A implementação mantém PySide6 e os fluxos determinísticos existentes, acrescentando temas claro/escuro e acento independente. Nenhum novo pacote .exe/.rpm deve ser gerado antes da aprovação visual solicitada pelo usuário.
+A referência visual enviada pelo usuário define o shell: cabeçalho em cápsulas, fundo neutro, navegação lateral isolada, grandes painéis arredondados com sombras suaves e blocos de ação. O laranja é apenas um exemplo. A implementação mantém PySide6 e os fluxos determinísticos existentes, acrescentando temas claro/escuro e acento independente. A interface foi aprovada pelo usuário em 22/10/2026; a etapa de instaladores foi autorizada.
 
 ## Áreas do dashboard
 
@@ -71,4 +71,4 @@ Ao adicionar página, atualize DESTINATIONS, ordem das páginas e atalhos corres
 
 Execute `.venv/bin/python run.py` no projeto para avaliar a interface nova. As capturas `interface-dashboard-claro.png`, `interface-dashboard-escuro.png`, `interface-dashboard-expandido.png` e `interface-dashboard-compacto.png` usam **exclusivamente trabalhos sintéticos** em estado isolado; nenhum desses trabalhos é inserido no estado real do usuário.
 
-Testes cobrem a fórmula, ausência de dados, contraste, destinos, busca, caminhos, edição de regras, expansão, persistência e sessões preservadas ao trocar tema. A avaliação nesta máquina é Linux/Qt; não comprova execução Windows, importação no ERP ou APIs reais. Os binários/ZIPs da versão anterior não contêm este dashboard. A criação de .exe/.rpm permanece para a etapa posterior à aprovação do usuário.
+Testes cobrem a fórmula, ausência de dados, contraste, destinos, busca, caminhos, edição de regras, expansão, persistência e sessões preservadas ao trocar tema. A avaliação nesta máquina é Linux/Qt; não comprova execução Windows, importação no ERP ou APIs reais. Os binários/ZIPs da versão anterior não contêm este dashboard. A etapa de .exe/.rpm foi autorizada após a aprovação; consulte EMPACOTAMENTO.md.

@@ -20,11 +20,12 @@ from openpyxl import load_workbook
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from app.core.catalog import digest, discover, rules_path, verify_rules, workspace_config  # noqa: E402
+from app import __version__  # noqa: E402
 
 
 def build(library=None):
     system = platform.system()
-    name = f"Conversor-de-Bases-{system}-{platform.machine()}-{datetime.now():%Y%m%d-%H%M%S}"
+    name = f"Transmute-{__version__}-{system}-{platform.machine()}-{datetime.now():%Y%m%d-%H%M%S}"
     release = ROOT / "dist" / name
     release.mkdir(parents=True, exist_ok=False)
     env = {**os.environ, "PYINSTALLER_CONFIG_DIR": str(ROOT / ".cache/pyinstaller"), "XDG_CACHE_HOME": str(ROOT / ".cache")}
@@ -38,7 +39,7 @@ def build(library=None):
         layouts = discover(library)
         profile = verify_rules(library)
         files = sorted({layout.path for layout in layouts})
-        preset = {"brand": config.get("brand", "Conversor de Bases"), "primary_color": config.get("primary_color", "#09695D"), "recognize_original_names": False, "families": {}}
+        preset = {"brand": config.get("brand", "Conversor de Bases"), "primary_color": config.get("primary_color", "#09695D"), "theme_mode": config.get("theme_mode", "light"), "recognize_original_names": False, "families": {}}
         logo = Path(config.get("logo_path", ""))
         if logo.is_file():
             relative_logo = "marca/logo" + logo.suffix.lower()
@@ -77,8 +78,9 @@ def build(library=None):
         (release / "library_preset.json").write_text(json.dumps(preset, ensure_ascii=False, indent=2), encoding="utf-8")
     else:
         shutil.copy2(ROOT / "#PLANILHAS DE BASE/VERSOES.md", release / "#PLANILHAS DE BASE/VERSOES.md")
+        shutil.copy2(ROOT / "packaging/brand.json", release / "library_preset.json")
     shutil.copytree(ROOT / "docs", release / "docs", ignore=shutil.ignore_patterns("*.png", "originais.sha256.json", "catalogo_modelos.json"))
-    (release / "LEIA-ME.txt").write_text("Conversor de Bases 1.1.0\n\nExtraia todo o ZIP em pasta gravável e abra " + executable + ".\nPython e bibliotecas estão incluídos. Mantenha regras e modelos ao lado do app.\nNa tela inicial você cria importações nomeadas com categorias e arquivos.\nBiblioteca contém modelos/regras; Aparência contém nome, cor global e logo de fundo.\nOs modelos deste pacote são cópias vazias, sem exemplos. Fontes originais do projeto não foram alteradas.\nEstado local fica em .local; não inclua essa pasta ao redistribuir.\nConsulte docs para regras, privacidade, manutenção e validação.\n", encoding="utf-8")
+    (release / "LEIA-ME.txt").write_text(f"Transmute {__version__}\n\nExtraia todo o ZIP em pasta gravável e abra " + executable + ".\nPython e bibliotecas estão incluídos. Mantenha regras e modelos ao lado do app.\nDashboard reúne atalhos, trabalhos e indicadores.\nBiblioteca contém modelos/regras; Aparência contém temas claro/escuro, destaque e logo.\nOs modelos deste pacote são cópias vazias, sem exemplos. Fontes originais do projeto não foram alteradas.\nEstado portátil fica em .local; não inclua essa pasta ao redistribuir.\nConsulte docs para regras, privacidade, manutenção e validação.\n", encoding="utf-8")
     licenses = release / "licencas"
     licenses.mkdir()
     import importlib.metadata

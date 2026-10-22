@@ -1,7 +1,8 @@
 """Persistência mínima: histórico sem células, perfis estruturais e opções sem secrets."""
 import json
-import sqlite3
 from datetime import datetime
+
+from app.storage.database import database
 
 
 class LocalStore:
@@ -16,7 +17,7 @@ class LocalStore:
             """)
 
     def connect(self):
-        return sqlite3.connect(self.path)
+        return database(self.path)
 
     def save_profile(self, name, fingerprint, mapping):
         with self.connect() as db:
