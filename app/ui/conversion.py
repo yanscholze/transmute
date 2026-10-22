@@ -5,6 +5,8 @@ exportação até revalidar; uma chamada de IA nunca escreve uma célula.
 """
 from itertools import islice
 
+from PySide6.QtCore import Signal
+
 from PySide6.QtWidgets import QCheckBox, QFileDialog, QHBoxLayout, QMessageBox, QStackedWidget, QTabWidget, QVBoxLayout, QWidget
 
 from app.core.exporters.writer import export
@@ -18,6 +20,9 @@ from app.ui.review import ReviewPane
 
 
 class ConversionPane(QWidget):
+    processed_event = Signal(object)
+    exported_event = Signal(object)
+
     def __init__(self, root, state, layouts, store, run_job, notify, parent=None):
         super().__init__(parent)
         self.root, self.state, self.layouts, self.store = root, state, layouts, store
@@ -69,6 +74,10 @@ class ConversionPane(QWidget):
         footer.addWidget(self.next)
         body.addLayout(footer)
         self.update_step()
+
+    def release_sessions(self):
+        """Transfira a posse ao trabalho sem remover os arquivos temporários."""
+        self.sessions = []
 
     def panes(self):
         return [self.main_input, self.related_input] if self.linked.isChecked() else [self.main_input]
@@ -141,6 +150,7 @@ class ConversionPane(QWidget):
         errors = sum(s.stats()["errors"] for s in sessions)
         self.notice.setText(f"Processamento concluído. {errors} registros com erros. A exportação final é bloqueada enquanto houver erros; o relatório permanece disponível.")
         self.update_step()
+        self.processed_event.emit(sessions)
 
     def correct(self, dataset, row, field, value):
         self.options.overrides[dataset][(row, field)] = value
@@ -168,6 +178,7 @@ class ConversionPane(QWidget):
         for session in self.sessions:
             self.store.record(session.layout.label, session.stats(), "Exportado")
         self.notify(f"Arquivos salvos em:\n{path}\n\nIncluídos diagnóstico Markdown, relatório JSON e resumo TXT. Na exportação de planilhas, os relatórios também foram copiados para a pasta de diagnósticos escolhida.")
+        self.exported_event.emit(path)
 
     def update_step(self):
         step = self.pages.currentIndex()

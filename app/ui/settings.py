@@ -33,7 +33,7 @@ class SettingsPane(QWidget):
         self.config = store.setting("ai", {"enabled": False, "provider": "OpenAI", "models": {}, "timeout": 30, "fallback": []})
         body = QVBoxLayout(self)
         body.setSpacing(14)
-        body.addWidget(text_label("Configurações", "title"))
+        body.addWidget(text_label("IA e perfis", "title"))
         body.addWidget(text_label("A conversão determinística funciona sem internet e sem credenciais.", "muted"))
         self.enabled = QCheckBox("Habilitar sugestões de mapeamento com IA")
         self.enabled.setChecked(self.config.get("enabled", False))

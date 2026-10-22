@@ -18,7 +18,13 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python run.py --smoke-test
 
 `test_ui.py`: QApplication real offscreen, carregamento em thread, navegação, mapeamento, decisões, processamento, correção e revalidação. Captura a tela de revisão para inspeção visual. Não depende de automação por coordenadas.
 
-`--self-test`: teste sintético de leitura/conversão/saída/relatórios disponível no próprio binário sem pytest.
+`test_import_projects.py`: trabalhos nomeados, várias categorias, todas as abas/tabelas, PDF posicional com zeros/coordenadas, rejeição de PDF sem tabela, conferência obrigatória, arquivo com erro preservado, drift de cabeçalho, correções retomadas, relatórios detalhados e rollback de cancelamento. OS com par único é exportada; cabeçalhos duplicados deixam o trabalho pendente, sem publicação incompleta, e mantêm diagnósticos individuais.
+
+`test_import_ui.py`: início com trabalhos, validação dos passos, fluxo completo com duas categorias, revisão/correção pendente persistida, reprocessamento, cor global, logo copiada com tamanho/intensidade e retomada após reabrir. Capturas das telas são sintéticas.
+
+`--self-test`: teste sintético de leitura CSV/PDF, conversão/saída/relatórios e QtPdf disponível no próprio binário sem pytest. O PDF mínimo é criado no diretório temporário pelo próprio teste, sem biblioteca de geração adicional.
+
+PDFs em `tests/fixtures` são exclusivamente sintéticos, com grades/descritivos artificiais. O leitor é exercitado em documento de duas páginas e documento sem tabela. Isso não prova reconhecimento de qualquer layout externo ou OCR.
 
 ## Validação manual antes de produção
 

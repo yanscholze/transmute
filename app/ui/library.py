@@ -1,12 +1,12 @@
-"""Tela inicial: biblioteca, branding e revisão das regras sem editar fontes."""
+"""Biblioteca técnica separada dos trabalhos e da aparência, sem editar fontes."""
 import json
 from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHBoxLayout, QLineEdit, QPlainTextEdit, QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout, QPlainTextEdit, QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget
 
 from app.core.catalog import discover, rules_path, workspace_config
-from app.storage.workspace import import_model, save_config, save_rule_revision, set_brand
+from app.storage.workspace import import_model, save_config, save_rule_revision
 from app.ui.common import button, text_label
 
 FAMILIES = {"generic": "Genérico · regras declarativas", "clientes": "Clientes", "fornecedores": "Fornecedores", "produtos": "Produtos", "veiculos": "Veículos", "pagar": "Contas a pagar", "receber": "Contas a receber", "os": "Ordens de serviço", "vendas": "Vendas"}
@@ -21,8 +21,7 @@ class LibraryPane(QWidget):
         body = QVBoxLayout(self)
         body.setSpacing(16)
         top = QHBoxLayout()
-        top.addWidget(text_label("Sua biblioteca de conversão", "title"), 1)
-        top.addWidget(button("Nova conversão", start, True))
+        top.addWidget(text_label("Biblioteca de modelos", "title"), 1)
         body.addLayout(top)
         body.addWidget(text_label("Escolha seus modelos e mantenha as regras de trabalho acessíveis em um só lugar.", "subtitle"))
         body.addWidget(text_label("Planilhas de base", "section"))
@@ -48,26 +47,12 @@ class LibraryPane(QWidget):
         self.rules_status = text_label("", "muted")
         body.addWidget(self.rules_status)
         body.addWidget(text_label("As referências originais permanecem intactas. Uploads e edições criam cópias locais. Regras em texto e operações executáveis precisam ser revisadas em conjunto.", "notice"))
-        branding = QFormLayout()
-        brandrow = QHBoxLayout()
-        self.brand = QLineEdit()
-        self.brand.setAccessibleName("Nome da aplicação")
-        self.color = QLineEdit()
-        self.color.setMaximumWidth(130)
-        self.color.setAccessibleName("Cor principal hexadecimal")
-        brandrow.addWidget(self.brand)
-        brandrow.addWidget(self.color)
-        brandrow.addWidget(button("Aplicar identidade", self.branding))
-        branding.addRow("Nome e cor da aplicação", brandrow)
-        body.addLayout(branding)
         self.refresh()
 
     def refresh(self):
         config = workspace_config(self.root)
         self.model_path.setText("Pasta: " + config.get("models_dir", "(nenhuma)") + f" · {len(config.get('uploaded_models', []))} arquivos importados")
         self.rules_status.setText(str(rules_path(self.root)))
-        self.brand.setText(config.get("brand", "Conversor de Bases"))
-        self.color.setText(config.get("primary_color", "#09695D"))
         try:
             layouts = discover(self.root)
         except Exception as error:
@@ -128,13 +113,6 @@ class LibraryPane(QWidget):
             save_config(self.root, config)
             self.reload()
             self.edit_rules()
-
-    def branding(self):
-        try:
-            set_brand(self.root, self.brand.text(), self.color.text())
-            self.changed.emit()
-        except ValueError as error:
-            self.notify(str(error))
 
     def edit_rules(self):
         config = workspace_config(self.root)

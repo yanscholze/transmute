@@ -14,8 +14,11 @@ def test_desktop_full_flow_and_review(qtbot, tmp_path, make_xlsx, monkeypatch):
     qtbot.addWidget(window)
     window.show()
     assert window.pages.currentIndex() == 0
-    window.navigate(1)
-    conversion = window.convert
+    # The same converter now lives inside an import's file review.
+    from app.ui.conversion import ConversionPane
+    conversion = ConversionPane(window.root, window.state, window.layouts, window.store, window.run_job, window.notify)
+    window.pages.addWidget(conversion)
+    window.pages.setCurrentWidget(conversion)
     pane = conversion.main_input
     for i in range(pane.layout_box.count()):
         layout = pane.layout_box.itemData(i)
@@ -46,6 +49,7 @@ def test_desktop_full_flow_and_review(qtbot, tmp_path, make_xlsx, monkeypatch):
     assert next(conversion.sessions[0].rows())["values"]["Razão Social / Nome"] == "Pessoa revisada sintética"
     (ROOT / "docs").mkdir(exist_ok=True)
     window.grab().save(str(ROOT / "docs/interface-revisao.png"))
+    conversion.close_sessions()
     window.close()
     assert not messages
 

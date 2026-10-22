@@ -4,7 +4,7 @@
 
 Python + PySide6 foi escolhido para interface nativa Windows/Linux, tabelas virtualizadas, threads e drag and drop, junto de leitores confiáveis para Excel. Tkinter reduz dependências, mas exige mais trabalho em tabelas e interação. Electron/React adiciona runtime e ponte com parser. Tauri reduz o shell, mas aumenta complexidade de build Rust e parsing/empacotamento. Não há servidor ou serviço remoto obrigatório.
 
-Python 3.12+; openpyxl (XLSX), xlrd (BIFF XLS), charset-normalizer (CSV), parser HTML restrito para XLS HTML, Decimal para quantidades/valores; SQLite para perfis e histórico; keyring para credenciais; httpx para APIs opcionais; PyInstaller para distribuição. Não usar DataFrame intermediário. Registros são iterados e convertidos para SQLite temporário local para revisão/paginação, removido ao fechar sessão. Interface usa modelos Qt e trabalho em threads canceláveis.
+Python 3.12+; openpyxl (XLSX), xlrd (BIFF XLS), charset-normalizer (CSV), parser HTML restrito para XLS HTML, pdfplumber para tabelas posicionais PDF, QtPdf para conferência local, Decimal para quantidades/valores; SQLite para perfis, trabalhos e histórico; keyring para credenciais; httpx para APIs opcionais; PyInstaller para distribuição. Não usar DataFrame intermediário. Registros são iterados e convertidos para SQLite temporário local para revisão/paginação, removido ao fechar sessão. Interface usa modelos Qt e trabalho em threads canceláveis.
 
 Fontes: [Qt for Python](https://doc.qt.io/qtforpython-6/), [PyInstaller: distribuição por sistema](https://pyinstaller.org/en/stable/operating-mode.html). Build nativo separado em Windows e Linux, pois PyInstaller não gera binário Windows a partir do Linux. Pacote inclui runtime e bibliotecas; modelos/regras são externos ao lado do aplicativo, substituíveis sem instalar Python. Licenças de dependências acompanham a distribuição.
 
@@ -20,9 +20,11 @@ Fontes: [Qt for Python](https://doc.qt.io/qtforpython-6/), [PyInstaller: distrib
 
 `app/core/exporters`: partes, vínculos, planilhas derivadas do cabeçalho, escrita textual segura e relatórios, transação de diretório sem sobrescrita.
 
-`app/storage`: histórico mínimo persistente e sessão de revisão local temporária. Configuração/estado na pasta do aplicativo por padrão; override explícito para diretório gravável. Não escrever em outros projetos.
+`app/storage`: histórico técnico mínimo, trabalhos nomeados e sessão de revisão local temporária. `imports.py` acrescenta `imports_v1` ao SQLite existente sem apagar perfis/histórico. Guarda referências, decisões e correções manuais esparsas; dados completos permanecem temporários. Configuração/estado na pasta do aplicativo por padrão; override explícito para diretório gravável. Não escrever em outros projetos.
 
-`app/ui`: assistente arquivo/modelo/mapeamento/revisão/exportação, modelos Qt de tabela, threads canceláveis, configurações, histórico e modelos.
+`app/core/batch.py`: expande abas/tabelas, processa cada fonte, conserva falhas no manifesto e valida grupos de OS/vendas. Exportação publica o trabalho completo por rename de staging, com Tratadas/Parciais; cancelamento remove a saída incompleta. Múltiplas fontes não são concatenadas implicitamente.
+
+`app/ui`: `imports_home.py` lista trabalhos; `import_wizard.py` recolhe nome/categorias/arquivos/regras; `import_detail.py` possui sessões e integra a revisão avançada existente. `library.py` cuida dos modelos/regras; `appearance.py` cuida da marca; `theme.py` deriva tokens e desenha logo atrás do conteúdo. `window.py` navega e administra worker único/cancelamento. Há modelos Qt de tabela, perfis e diagnóstico separados do início.
 
 `app/ai`: providers independentes para OpenAI, Gemini, Claude e CLI restrita quando comprovada; schema JSON fechado, sanitização central e confirmação antes de envio. Nunca converter registro via modelo. Apenas sugestões com IDs opacos de coluna, sem nomes/células brutas enviados por padrão. Retorno só sugere mapeamentos. Chaves em keyring ou somente memória, nunca config. Fallback explícito por usuário e somente entre provedores consentidos.
 
@@ -38,8 +40,10 @@ Fontes: [Qt for Python](https://doc.qt.io/qtforpython-6/), [PyInstaller: distrib
 
 ## Evolução para biblioteca configurável e white label
 
-Conforme refinamento do pedido em 22/10/2026, referências padrão são apenas um preset inicial. `storage/workspace.py` mantém ponteiros para qualquer pasta de modelos e arquivo de regras, cópias de uploads, revisões aprovadas de Markdown/JSON e branding. `ui/library.py` expõe essas ações na tela inicial. Nenhum caminho absoluto da máquina de desenvolvimento é embutido no executável.
+Conforme refinamento do pedido em 22/10/2026, referências padrão são apenas um preset inicial. `storage/workspace.py` mantém ponteiros para qualquer pasta de modelos e arquivo de regras, cópias de uploads, revisões aprovadas de Markdown/JSON e branding. Na versão 1.1, essas ações ficam em Biblioteca e Aparência, acessíveis pela navegação da tela inicial. Nenhum caminho absoluto da máquina de desenvolvimento é embutido no executável.
 
-Modelos desconhecidos são genéricos e usam somente regras declarativas explícitas. Associação a famílias conhecidas é escolhida na biblioteca, sem adivinhar a natureza de uma base. Mudança da biblioteca reinicia a conversão em curso, preservando fontes.
+Modelos desconhecidos são genéricos e usam somente regras declarativas explícitas. Associação a famílias conhecidas é escolhida na biblioteca, sem adivinhar a natureza de uma base. Mudança da biblioteca invalida os resultados em curso, preservando fontes e trabalhos. Aparência não invalida processamento.
 
 O build aceita `--library` para criar distribuição configurada com marca, modelos vazios e perfil aprovado. O preset distribuído usa caminhos relativos; a instalação resolve os caminhos no primeiro uso. Estado, credenciais e histórico não são exportados.
+
+PDF não é convertido em texto corrido para simular linhas. O adapter localiza tabelas e coordenadas com pdfplumber; confirmação humana é uma condição do core (`PDF_CONFERENCIA`), inclusive fora da UI. PDFs sem tabela ficam pendentes ou são classificados explicitamente como apoio. Não há OCR. Fontes: [pdfplumber](https://github.com/jsvine/pdfplumber), [QPdfView](https://doc.qt.io/qtforpython-6/PySide6/QtPdfWidgets/QPdfView.html).

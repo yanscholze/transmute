@@ -30,7 +30,7 @@ def main():
     logger = logging.getLogger("conversor")
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
-    logger.info("application_start version=1.0.0")
+    logger.info("application_start version=1.1.0")
     app = QApplication.instance() or QApplication(sys.argv[:1])
     app.setApplicationName("Conversor de Bases")
     app.setOrganizationName("ConversorLocal")

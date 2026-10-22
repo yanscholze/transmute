@@ -111,6 +111,8 @@ def process(root, state, source, layout, decisions, options, control=None):
             raise ValueError("A origem mudou durante a leitura. Tente novamente com arquivo estável.")
         if not session.stats()["read"]:
             raise ValueError("Não há registros após o cabeçalho escolhido.")
+        if source.format == "pdf" and not options.pdf_confirmed:
+            session.global_issues.append(Issue("ERRO", "PDF_CONFERENCIA", "", "Confira a tabela extraída com a página do PDF original e confirme a revisão antes de exportar."))
         for warning in source.warnings:
             session.global_issues.append(Issue("AVISO", "LEITURA", "", warning))
         ignored = [h for sid, h in zip(source.ids, source.headers) if not any(d.source == sid and d.target for d in decisions)]

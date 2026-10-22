@@ -52,10 +52,12 @@ def detect(path):
         return "xlsx"
     if head.startswith(b"\xd0\xcf\x11\xe0"):
         return "xls"
+    if head.lstrip().startswith(b"%PDF-"):
+        return "pdf"
     if re.search(br"<(?:html|table)\b", head.lstrip(b"\xef\xbb\xbf \r\n\t"), re.I):
         return "html"
     if path.suffix.lower() not in {".csv", ".tsv", ".txt", ".xls"}:
-        raise ValueError("Formato não reconhecido. Use XLSX, XLS ou CSV. PDF ainda não é suportado.")
+        raise ValueError("Formato não reconhecido. Use XLSX, XLS, CSV ou PDF.")
     return "csv"
 
 
@@ -130,8 +132,11 @@ def html_tables(path):
     return parser.tables
 
 
-def sheets(path):
+def sheets(path, control=None):
     fmt = detect(path)
+    if fmt == "pdf":
+        from app.core.importers.pdf import tables
+        return tables(path, control)
     if fmt == "xlsx":
         book = load_workbook(path, read_only=True, data_only=False)
         try:
@@ -152,7 +157,10 @@ def sheets(path):
 
 def raw_rows(path, sheet, fmt, encoding="", delimiter="", control=None):
     control = control or Control()
-    if fmt == "xlsx":
+    if fmt == "pdf":
+        from app.core.importers.pdf import rows
+        yield from rows(path, sheet, control)
+    elif fmt == "xlsx":
         book = load_workbook(path, read_only=True, data_only=False, keep_links=False)
         try:
             for n, row in enumerate(book[sheet].iter_rows(), 1):
@@ -192,7 +200,7 @@ def inspect(path, sheet=None, header_row=None, encoding=None, delimiter=None, co
     """Sugira estrutura a partir de amostra limitada; a UI permite corrigir a escolha."""
     path = Path(path).resolve()
     fmt = detect(path)
-    available = sheets(path)
+    available = [sheet] if fmt == "pdf" and sheet else sheets(path, control)
     if not available:
         raise ValueError("Nenhuma aba/tabela encontrada.")
     sheet = sheet or available[0]
@@ -221,6 +229,8 @@ def inspect(path, sheet=None, header_row=None, encoding=None, delimiter=None, co
         warnings.append("Há colunas sem cabeçalho. Use os IDs de coluna para mapear.")
     if fmt == "csv":
         warnings.append(f"Encoding sugerido: {enc}; confirme acentos e delimitador na prévia.")
+    if fmt == "pdf":
+        warnings.append("Tabela extraída por posição. Confira a página e a tabela no PDF original antes de confirmar a revisão.")
     return Source(path, sheet, header_row, headers, enc, delim, fmt, warnings)
 
 

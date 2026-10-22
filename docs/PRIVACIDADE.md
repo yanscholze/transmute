@@ -4,8 +4,9 @@
 
 Por padrão, `.local/` ao lado do projeto/executável. `CONVERSOR_STATE_DIR` permite escolher outro diretório gravável de forma explícita. A UI não inicia servidor HTTP nem exige porta local.
 
-- `history.sqlite3`: perfis cabeçalho/destino, data/layout/contagens, resultado e opções de IA sem chave.
-- `workspace/workspace.json`: referências a modelos/regras e identidade visual.
+- `history.sqlite3`: perfis cabeçalho/destino, histórico técnico data/layout/contagens, resultado e opções de IA sem chave. A nova tabela `imports_v1` também contém nome do trabalho, títulos, caminhos completos das fontes/saídas, categorias, opções, mapeamentos, hashes, estatísticas e correções manuais esparsas. As correções e textos livres podem conter dados pessoais; não há cópia integral das bases nessa tabela.
+- `workspace/workspace.json`: referências a modelos/regras e identidade visual, incluindo caminho e parâmetros da logo.
+- `workspace/assets/`: cópias das logos adicionadas. Remover a logo da tela desassocia a imagem; não promete eliminação de cópias/backups anteriores.
 - `workspace/models/`: cópias dos modelos importados.
 - `workspace/rule-revisions/`: versões aprovadas do Markdown e perfil.
 - `sessions/review-*.sqlite3`: dados sensíveis temporários de revisão. Removidos ao encerrar conversão/janela normalmente.

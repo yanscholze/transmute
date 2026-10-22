@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import zipfile
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
@@ -38,10 +39,21 @@ def build(library=None):
         profile = verify_rules(library)
         files = sorted({layout.path for layout in layouts})
         preset = {"brand": config.get("brand", "Conversor de Bases"), "primary_color": config.get("primary_color", "#09695D"), "recognize_original_names": False, "families": {}}
+        logo = Path(config.get("logo_path", ""))
+        if logo.is_file():
+            relative_logo = "marca/logo" + logo.suffix.lower()
+            target_logo = release / relative_logo
+            target_logo.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(logo, target_logo)
+            preset.update(logo_path=relative_logo, logo_size=config.get("logo_size", 50),
+                          logo_opacity=config.get("logo_opacity", 8), logo_position=config.get("logo_position", "center"))
     else:
         files = sorted((ROOT / "#PLANILHAS DE BASE").rglob("*.xlsx"))
-    for index, source in enumerate(files):
-        relative = Path("#PLANILHAS DE BASE") / f"Modelo_{index+1:03d}" / source.name if library else source.relative_to(ROOT)
+    parents = sorted({path.parent for path in files})
+    counts = Counter(parent.name for parent in parents)
+    group_names = {parent: parent.name if counts[parent.name] == 1 else f"Conjunto_{index+1:03d}_{parent.name}" for index, parent in enumerate(parents)}
+    for source in files:
+        relative = Path("#PLANILHAS DE BASE") / group_names[source.parent] / source.name if library else source.relative_to(ROOT)
         target = release / relative
         if preset is not None:
             preset["families"][relative.as_posix()] = next(layout.family for layout in layouts if layout.path == source)
@@ -66,7 +78,7 @@ def build(library=None):
     else:
         shutil.copy2(ROOT / "#PLANILHAS DE BASE/VERSOES.md", release / "#PLANILHAS DE BASE/VERSOES.md")
     shutil.copytree(ROOT / "docs", release / "docs", ignore=shutil.ignore_patterns("*.png", "originais.sha256.json", "catalogo_modelos.json"))
-    (release / "LEIA-ME.txt").write_text("Conversor de Bases 1.0.0\n\nExtraia todo o ZIP em pasta gravável e abra " + executable + ".\nPython e bibliotecas estão incluídos. Mantenha regras e modelos ao lado do app.\nNa tela inicial você pode apontar outra pasta, importar modelos, editar regras e personalizar nome/cor.\nOs modelos deste pacote são cópias vazias, sem exemplos. Fontes originais do projeto não foram alteradas.\nEstado local fica em .local; não inclua essa pasta ao redistribuir.\nConsulte docs para regras, privacidade, manutenção e validação.\n", encoding="utf-8")
+    (release / "LEIA-ME.txt").write_text("Conversor de Bases 1.1.0\n\nExtraia todo o ZIP em pasta gravável e abra " + executable + ".\nPython e bibliotecas estão incluídos. Mantenha regras e modelos ao lado do app.\nNa tela inicial você cria importações nomeadas com categorias e arquivos.\nBiblioteca contém modelos/regras; Aparência contém nome, cor global e logo de fundo.\nOs modelos deste pacote são cópias vazias, sem exemplos. Fontes originais do projeto não foram alteradas.\nEstado local fica em .local; não inclua essa pasta ao redistribuir.\nConsulte docs para regras, privacidade, manutenção e validação.\n", encoding="utf-8")
     licenses = release / "licencas"
     licenses.mkdir()
     import importlib.metadata

@@ -31,6 +31,10 @@ def initialize(project, state):
             profile = project / "regras_perfil.json"
         families = {str(project / key): value for key, value in preset.get("families", {}).items()}
         save_config(root, {"models_dir": str(project / "#PLANILHAS DE BASE"), "uploaded_models": [], "rules_path": str(project / "INSTRUCOES_CONVERSOES.md"), "profile_path": str(profile), "recognize_original_names": preset.get("recognize_original_names", True), "families": families, "brand": preset.get("brand", "Conversor de Bases"), "primary_color": preset.get("primary_color", "#09695D")})
+        config = workspace_config(root)
+        config.update(logo_path=str(project / preset["logo_path"]) if preset.get("logo_path") else "",
+                      logo_size=preset.get("logo_size", 50), logo_opacity=preset.get("logo_opacity", 8), logo_position=preset.get("logo_position", "center"))
+        save_config(root, config)
     return root
 
 

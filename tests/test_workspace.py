@@ -93,9 +93,15 @@ def test_portable_branded_library_uses_relative_sources(tmp_path, make_xlsx, opt
     profile = {"max_total_rows": 10000, "source_sha256": digest(bundle / "INSTRUCOES_CONVERSOES.md"), "enabled_modules": [], "rules": [{"id": "NOME", "field": "Nome", "operation": "required"}]}
     (bundle / "regras_perfil.json").write_text(json.dumps(profile))
     relative = "#PLANILHAS DE BASE/Empresa/" + template.name
-    (bundle / "library_preset.json").write_text(json.dumps({"brand": "Empresa Sintética", "primary_color": "#284B80", "recognize_original_names": False, "families": {relative: "generic"}}))
+    logo = bundle / "marca" / "logo.png"
+    logo.parent.mkdir()
+    logo.write_bytes(b"synthetic-preset-path-only")
+    (bundle / "library_preset.json").write_text(json.dumps({"brand": "Empresa Sintética", "primary_color": "#284B80", "recognize_original_names": False, "families": {relative: "generic"}, "logo_path": "marca/logo.png", "logo_size": 67, "logo_opacity": 12}))
     root = initialize(bundle, tmp_path / "state")
     assert workspace_config(root)["brand"] == "Empresa Sintética"
+    assert workspace_config(root)["logo_path"] == str(logo)
+    assert workspace_config(root)["logo_size"] == 67
+    assert workspace_config(root)["logo_opacity"] == 12
     layouts = discover(root)
     assert len(layouts) == 1 and layouts[0].family == "generic"
     source = inspect(make_xlsx(["Nome", "Código"], [["Dado sintético", "0001"]], "entrada.xlsx"), header_row=1)

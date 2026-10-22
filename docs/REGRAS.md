@@ -60,6 +60,12 @@ Uma regra declarativa posterior pode tornar obsoleto o resultado de uma validaç
 
 ## Adicionar modelo/família
 
-Importe o XLSX pela tela inicial ou aponte sua pasta; cabeçalhos são lidos do arquivo. Use Genérico para começar. Depois declare regras com os cabeçalhos exatos. Só associe uma família conhecida quando sua semântica corresponder ao perfil.
+Importe o XLSX em Biblioteca ou aponte sua pasta; cabeçalhos são lidos do arquivo. Use Genérico para começar. Depois declare regras com os cabeçalhos exatos. Só associe uma família conhecida quando sua semântica corresponder ao perfil.
 
 Uma família nova com lógica específica exige: registrar nome em `Layout.label`/UI, adicionar regras ao módulo de domínio, testar com dados sintéticos e documentar conflitos. Não basta renomear um arquivo para simular compatibilidade.
+
+## PDF e decisões por trabalho
+
+`Options.pdf_confirmed` registra a conferência humana do documento/tabelas. Sem ela, o core adiciona `PDF_CONFERENCIA` como erro global: permite processar/revisar e exportar diagnósticos, mas impede planilha final. Não é default de domínio nem uma regra que o perfil possa desativar. A UI oferece visualizador do original e opção contextual; a responsabilidade de conferir todas as tabelas permanece do operador. Não há OCR ou preenchimento de colunas ausentes por inferência.
+
+Opções gerais do trabalho valem para os arquivos sem uma revisão específica. Revisão individual pode salvar opções próprias, mapeamentos e correções; alterar Regras deste trabalho descarta as opções individuais e exige reprocessamento de todos. Alterar Markdown/perfil/modelos invalida os snapshots usados na exportação. Um arquivo marcado como apoio não passa pela conversão e fica identificado assim no resumo.

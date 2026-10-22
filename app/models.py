@@ -95,4 +95,5 @@ class Options:
     oil_cfop_evidence: str = ""
     numeric_identifiers_confirmed: bool = False
     partial: bool = False
+    pdf_confirmed: bool = False
     overrides: dict = field(default_factory=dict)

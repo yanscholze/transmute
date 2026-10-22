@@ -22,7 +22,7 @@ class InputPane(QWidget):
         self.setAcceptDrops(True)
         body = QVBoxLayout(self)
         body.setSpacing(16)
-        self.drop = text_label("Arraste uma planilha aqui ou selecione um arquivo\nXLSX, XLS e CSV · o original será preservado", "drop")
+        self.drop = text_label("Arraste uma planilha ou PDF aqui\nXLSX, XLS, CSV e PDF · o original será preservado", "drop")
         self.drop.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.drop.setMinimumHeight(92)
         body.addWidget(self.drop)
@@ -84,7 +84,7 @@ class InputPane(QWidget):
         self.changed.emit()
 
     def browse(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Selecionar base", "", "Bases (*.xlsx *.xls *.csv *.tsv);;Todos os arquivos (*)")
+        path, _ = QFileDialog.getOpenFileName(self, "Selecionar base", "", "Bases (*.xlsx *.xls *.csv *.tsv *.pdf);;Todos os arquivos (*)")
         if path:
             self.set_path(path)
 

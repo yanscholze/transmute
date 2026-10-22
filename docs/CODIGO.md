@@ -62,6 +62,19 @@ Fallback somente entre provedores já consentidos; nenhuma tentativa altera dado
 
 - `suggestions` (linha 6)
 
+## app/core/batch.py
+
+Orquestra arquivos de uma importação sem misturar tabelas de famílias distintas.
+
+Todas as abas/tabelas detectadas são representadas. Falha de arquivo não apaga
+os demais e fica explícita no manifesto. Exportação valida todos os grupos
+antes de publicar um diretório único, com rollback em cancelamento/erro.
+
+- `options_from` (linha 25)
+- `groups` (linha 30)
+- `process_import` (linha 49)
+- `export_import` (linha 121)
+
 ## app/core/catalog.py
 
 Estrutura vem dos modelos; comportamento vem de um perfil revisado.
@@ -94,6 +107,17 @@ impossível, bloquear é mais seguro do que reorganizar silenciosamente.
 Leitores iteráveis; nunca alteram a origem.
 
 
+## app/core/importers/pdf.py
+
+Tabelas PDF por página e geometria; texto corrido nunca vira linha de cadastro.
+
+Cada tabela é uma fonte distinta. A confirmação visual é exigida pelo motor
+antes da exportação. PDFs sem grade reconhecível ficam pendentes, sem OCR ou
+inferência de campos por proximidade de texto.
+
+- `tables` (linha 14)
+- `rows` (linha 31)
+
 ## app/core/importers/reader.py
 
 Detecção por conteúdo e leitores que expõem posição física e tipo de origem.
@@ -103,14 +127,14 @@ executa fórmula ou tenta recuperar zeros que já desapareceram da fonte.
 
 - `excel_cell` (linha 21): Converta representação sem float arithmetic, mantendo evidência de risco.
 - `detect` (linha 47)
-- `csv_settings` (linha 62)
-- `HTMLTables` (linha 89)
-  Métodos: `__init__`:90, `handle_starttag`:94, `handle_data`:108, `handle_endtag`:112.
-- `html_tables` (linha 124)
-- `sheets` (linha 133)
-- `raw_rows` (linha 153)
-- `inspect` (linha 191): Sugira estrutura a partir de amostra limitada; a UI permite corrigir a escolha.
-- `records` (linha 227): Inclua linhas vazias e células excedentes para contagem e auditoria explícitas.
+- `csv_settings` (linha 64)
+- `HTMLTables` (linha 91)
+  Métodos: `__init__`:92, `handle_starttag`:96, `handle_data`:110, `handle_endtag`:114.
+- `html_tables` (linha 126)
+- `sheets` (linha 135)
+- `raw_rows` (linha 158)
+- `inspect` (linha 199): Sugira estrutura a partir de amostra limitada; a UI permite corrigir a escolha.
+- `records` (linha 237): Inclua linhas vazias e células excedentes para contagem e auditoria explícitas.
 
 ## app/core/mapping/__init__.py
 
@@ -144,7 +168,7 @@ deve fechá-la; processamento malsucedido remove o arquivo automaticamente.
 - `Session` (linha 20)
   Métodos: `__init__`:21, `connect`:40, `close`:43, `rows`:46, `stats`:66, `verify`:71.
 - `process` (linha 81)
-- `validate_links` (linha 125): Cheque integridade referencial sem excluir/deduplicar nenhum registro.
+- `validate_links` (linha 127): Cheque integridade referencial sem excluir/deduplicar nenhum registro.
 
 ## app/core/transformation/engine.py
 
@@ -202,7 +226,22 @@ Resolve diretório portátil e estado gravável, com override explícito do oper
 
 Teste sintético disponível também no executável distribuído, sem pytest.
 
-- `run` (linha 15)
+- `synthetic_pdf` (linha 15): PDF mínimo com grade, sem gerador externo nem dados reais no binário.
+- `run` (linha 39)
+
+## app/storage/imports.py
+
+Importações nomeadas: referências persistentes sem duplicar bases completas.
+
+As referências a arquivos são necessárias para reabrir uma importação. Dados
+de revisão completos continuam em sessões temporárias. Correções manuais
+necessárias à retomada podem conter dados pessoais e ficam no manifesto local.
+A tabela nova preserva histórico,
+perfis e configurações existentes na mesma base SQLite.
+
+- `now` (linha 18)
+- `ImportStore` (linha 22)
+  Métodos: `__init__`:23, `create`:33, `save`:48, `get`:53, `list`:60.
 
 ## app/storage/local.py
 
@@ -220,15 +259,22 @@ um novo par Markdown/JSON; o ponteiro só muda depois que ambos são gravados.
 
 - `save_config` (linha 15)
 - `initialize` (linha 22)
-- `import_model` (linha 37)
-- `save_rule_revision` (linha 62)
-- `set_brand` (linha 80)
+- `import_model` (linha 41)
+- `save_rule_revision` (linha 66)
+- `set_brand` (linha 84)
 
 ## app/ui/ai_actions.py
 
 Diálogo de consentimento com payload exato e aplicação de sugestões não confirmadas.
 
 - `suggest_mapping` (linha 15)
+
+## app/ui/appearance.py
+
+Aparência isolada do fluxo de importação, com prévia local e logo copiada.
+
+- `AppearancePane` (linha 16)
+  Métodos: `__init__`:19, `draft`:84, `refresh`:88, `choose_color`:94, `choose_logo`:99, `load_logo`:104, `remove_logo`:117, `save`:121.
 
 ## app/ui/common.py
 
@@ -252,8 +298,43 @@ Coordena o assistente e o ciclo de vida das sessões principal/vinculada.
 UI coleta decisões e despacha operações ao core. Correção pendente bloqueia
 exportação até revalidar; uma chamada de IA nunca escreve uma célula.
 
-- `ConversionPane` (linha 20)
-  Métodos: `__init__`:21, `panes`:73, `previous`:76, `advance`:80, `prepare_mapping`:102, `process`:114, `processed`:128, `correct`:145, `do_export`:152, `exported`:167, `update_step`:172, `ai_suggest`:182, `close_sessions`:187.
+- `ConversionPane` (linha 22)
+  Métodos: `__init__`:26, `release_sessions`:78, `panes`:82, `previous`:85, `advance`:89, `prepare_mapping`:111, `process`:123, `processed`:137, `correct`:155, `do_export`:162, `exported`:177, `update_step`:183, `ai_suggest`:193, `close_sessions`:198.
+
+## app/ui/file_settings.py
+
+Classificação de arquivo e visualizador PDF local, sem abrir navegador externo.
+
+- `FileSettings` (linha 10)
+  Métodos: `__init__`:11, `populate`:50, `browse`:58, `save`:65.
+- `open_pdf` (linha 80)
+
+## app/ui/import_detail.py
+
+Detalhes de um trabalho e ponte para o conversor existente por arquivo/lote.
+
+O trabalho possui as sessões; editores apenas as usam enquanto estão abertos.
+Revalidação substitui sessões e mantém correções manuais necessárias à retomada.
+
+- `ImportDetail` (linha 25)
+  Métodos: `__init__`:29, `set_job`:71, `refresh`:77, `selection_changed`:95, `selected`:100, `save`:104, `process_all`:109, `processing_failed`:122, `processed`:126, `recalculate_status`:131, `edit_options`:145, `rename`:169, `edit_selected`:176, `add_file`:181, `edit_item`:185, `view_pdf`:202, `review_selected`:209, `open_editor`:241, `review_processed`:279, `leave_editor`:294, `do_export`:313, `exported`:325, `close_sessions`:332.
+
+## app/ui/import_wizard.py
+
+Assistente: nome/categorias → arquivos classificados → regras e início.
+
+Cada arquivo tem título, categoria e destino visíveis. Os originais são
+referenciados, não movidos nem enviados a serviços externos.
+
+- `ImportWizard` (linha 18)
+  Métodos: `__init__`:22, `identification`:49, `selected_categories`:74, `file_page`:77, `browse`:95, `add_files`:99, `snapshot`:111, `render_files`:120, `populate_models`:146, `remove`:162, `previous`:169, `advance`:179, `update_step`:213, `dragEnterEvent`:220, `dropEvent`:224.
+
+## app/ui/imports_home.py
+
+Início centrado em trabalhos nomeados; configurações ficam em outras telas.
+
+- `ImportsHome` (linha 8)
+  Métodos: `__init__`:9, `refresh`:50, `open_selected`:65.
 
 ## app/ui/input.py
 
@@ -267,10 +348,10 @@ prévia que corresponda a outro arquivo, aba ou encoding.
 
 ## app/ui/library.py
 
-Tela inicial: biblioteca, branding e revisão das regras sem editar fontes.
+Biblioteca técnica separada dos trabalhos e da aparência, sem editar fontes.
 
 - `LibraryPane` (linha 15)
-  Métodos: `__init__`:18, `refresh`:65, `reload`:92, `choose_folder`:99, `upload`:107, `family_changed`:117, `choose_rules`:123, `branding`:132, `edit_rules`:139.
+  Métodos: `__init__`:18, `refresh`:52, `reload`:77, `choose_folder`:84, `upload`:92, `family_changed`:102, `choose_rules`:108, `edit_rules`:117.
 
 ## app/ui/mapping.py
 
@@ -288,7 +369,7 @@ ficam restritos ao fingerprint do destino para evitar reaplicação absoluta.
 Coleta escolhas e evidências por conversão; o core é quem aplica as regras.
 
 - `OptionsPane` (linha 8)
-  Métodos: `__init__`:9, `get`:48.
+  Métodos: `__init__`:9, `get`:52, `set_options`:55, `configure_categories`:68.
 
 ## app/ui/review.py
 
@@ -307,18 +388,32 @@ Configura provedores/cofre, testa com estrutura sintética e administra perfis l
 
 ## app/ui/style.py
 
-Módulo da camada app/ui.
+Default style for entrypoints; windows derive their palette from saved appearance.
 
+
+## app/ui/theme.py
+
+Paleta derivada de uma cor e marca d'água desenhada atrás do conteúdo.
+
+Todas as superfícies usam os mesmos tokens. O contraste do botão é calculado
+para cores claras/escuras; logo conserva proporção e não recebe eventos.
+
+- `mix` (linha 13)
+- `foreground` (linha 18)
+- `palette` (linha 25)
+- `stylesheet` (linha 35)
+- `Backdrop` (linha 83)
+  Métodos: `__init__`:84, `configure`:88, `paintEvent`:94.
 
 ## app/ui/window.py
 
-Shell desktop: navegação, biblioteca ativa e execução/cancelamento de tarefas.
+Shell: trabalhos, biblioteca e aparência têm áreas próprias.
 
-Fechamento aguarda o worker terminar antes de remover sessões. Mudanças de
-biblioteca recriam o assistente para não reaproveitar decisões de outra base.
+O worker único mantém cancelamento acessível. Aparência nunca reinicia uma
+importação; mudanças da biblioteca exigem nova validação do trabalho.
 
-- `Window` (linha 16)
-  Métodos: `__init__`:17, `notify`:94, `navigate`:98, `apply_brand`:106, `reload_library`:113, `run_job`:133, `job_error`:148, `job_finished`:153, `cancel_job`:164, `make_history`:169, `refresh_history`:179, `clear_history`:187, `make_models`:193, `closeEvent`:206.
+- `Window` (linha 17)
+  Métodos: `__init__`:18, `notify`:100, `navigate`:104, `new_import`:118, `cancel_wizard`:128, `import_created`:135, `open_import`:140, `apply_brand`:146, `reload_library`:153, `run_job`:172, `job_error`:188, `job_finished`:195, `cancel_job`:206, `make_history`:211, `refresh_history`:220, `closeEvent`:228.
 
 ## scripts/audit_models.py
 
@@ -332,7 +427,7 @@ Build nativo e pacote portátil, sem copiar estado, secrets ou exemplos.
 Execute com o Python do .venv no SO alvo. PyInstaller não faz cross-compilation.
 Cada release ganha diretório novo; versões anteriores não são apagadas.
 
-- `build` (linha 24)
+- `build` (linha 25)
 
 ## scripts/document_code.py
 
@@ -413,13 +508,37 @@ Módulo da camada tests.
 - `test_numeric_excel_decimal_not_ambiguous` (linha 69)
 - `test_cli_restricted_arguments_and_json` (linha 75)
 
+## tests/test_import_projects.py
+
+Trabalhos, processamento em lote e PDF usam somente arquivos sintéticos.
+
+- `attachment` (linha 18)
+- `test_pdf_tables_and_zero_preservation` (linha 23)
+- `test_pdf_without_table_is_explicitly_rejected` (linha 32)
+- `test_named_job_multiple_categories_export` (linha 37)
+- `test_every_pdf_table_represented_and_requires_review` (linha 59)
+- `test_failed_file_stays_in_import` (linha 89)
+- `test_multi_sheet_and_changed_header_does_not_reuse_mapping` (linha 104)
+- `test_saved_corrections_and_cancel_do_not_publish` (linha 131)
+- `test_batch_links_and_ambiguous_pairs_remain_pending` (linha 147): A lista de arquivos não autoriza adivinhar qual cabeçalho recebe itens.
+
+## tests/test_import_ui.py
+
+Fluxo amigável e aparência são verificados em widgets Qt reais, offscreen.
+
+- `make_window` (linha 12)
+- `test_home_shows_imports_and_wizard_validates` (linha 21)
+- `test_named_multi_file_flow_and_saved_pending_correction` (linha 42)
+- `test_global_color_logo_size_and_reopen` (linha 89)
+- `test_light_and_dark_colors_have_distinct_surfaces` (linha 128)
+
 ## tests/test_ui.py
 
 Módulo da camada tests.
 
 - `test_desktop_full_flow_and_review` (linha 9)
-- `test_initial_rule_editor_saves_revision_without_touching_original` (linha 53)
-- `test_bad_model_folder_is_recoverable` (linha 79)
+- `test_initial_rule_editor_saves_revision_without_touching_original` (linha 57)
+- `test_bad_model_folder_is_recoverable` (linha 83)
 
 ## tests/test_workspace.py
 
