@@ -131,3 +131,33 @@ def test_light_and_dark_colors_have_distinct_surfaces():
     assert palette("#305AA1")["tint"] != palette("#09695D")["tint"]
     assert palette("#305AA1", "dark")["bg"] != palette("#305AA1", "light")["bg"]
     assert "#101820" in stylesheet("#FFFFFF")
+
+
+def test_worker_defers_qt_cycle_collection_to_gui_thread(qtbot, tmp_path, monkeypatch):
+    """Unreachable widgets must never be finalized by Python's worker GC."""
+    import gc
+    import threading
+    from PySide6.QtWidgets import QLabel
+
+    window, messages = make_window(qtbot, tmp_path, monkeypatch)
+    finalized, worker_states = [], []
+    gui_thread = threading.get_ident()
+
+    class RetiredWidget(QLabel):
+        def __del__(self):
+            finalized.append(threading.get_ident())
+
+    retired = RetiredWidget("sintetico")
+    retired.cycle = retired
+    del retired
+
+    def task(control):
+        worker_states.append((threading.get_ident(), gc.isenabled()))
+        return "ok"
+
+    window.run_job(task, lambda _: None, "Teste sintetico")
+    qtbot.waitUntil(lambda: window.worker is None, timeout=10000)
+    assert finalized == [gui_thread]
+    assert worker_states[0][0] != gui_thread and not worker_states[0][1]
+    assert gc.isenabled() and not messages
+    window.close()

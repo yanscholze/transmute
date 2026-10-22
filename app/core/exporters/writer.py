@@ -20,6 +20,7 @@ from app.core.catalog import verify_rules
 from app.core.mapping import targets
 from app.core.session import validate_links
 from app.models import Control
+from app import __version__
 
 
 def selected_lines(session, partial):
@@ -151,7 +152,7 @@ def report_data(sessions, selections, issues, outputs=None, omitted=None):
                          "unresolved_fields": unresolved, "transformations": dict(counts),
                          "ai_decisions": session.ai_events, "problems": problematic,
                          "global_issues": [asdict(p) for p in session.global_issues], "options": options})
-    return {"application": "Conversor de Bases 1.1.0", "created": datetime.now().astimezone().isoformat(),
+    return {"application": "Conversor de Bases " + __version__, "created": datetime.now().astimezone().isoformat(),
             "datasets": datasets, "link_issues": [asdict(p) for p in issues], "outputs": outputs or [], "omitted_columns": omitted or {},
             "scope": "Validação das regras documentadas; requisitos não documentados e aceitação em ERP exigem teste de importação."}
 

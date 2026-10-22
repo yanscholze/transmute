@@ -20,11 +20,30 @@ from openpyxl import load_workbook
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from app.core.catalog import digest, discover, rules_path, verify_rules, workspace_config  # noqa: E402
+from app import __version__  # noqa: E402
+
+
+def archive_path(directory):
+    """Append extension: version dots are not a filesystem suffix to replace."""
+    return directory.with_name(directory.name + ".zip")
+
+
+def validate_binary(command, release, env, timeout):
+    """Surface frozen GUI tracebacks even when Windows has no console."""
+    diagnostic = Path(env["CONVERSOR_STATE_DIR"]) / "build-error.txt"
+    diagnostic.parent.mkdir(parents=True, exist_ok=True)
+    check_env = {**env, "CONVERSOR_DIAGNOSTIC_FILE": str(diagnostic)}
+    try:
+        subprocess.run(command, cwd=release, env=check_env, check=True, timeout=timeout)
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        if diagnostic.is_file():
+            print(diagnostic.read_text(encoding="utf-8"))
+        raise
 
 
 def build(library=None):
     system = platform.system()
-    name = f"Conversor-de-Bases-{system}-{platform.machine()}-{datetime.now():%Y%m%d-%H%M%S}"
+    name = f"Transmute-{__version__}-{system}-{platform.machine()}-{datetime.now():%Y%m%d-%H%M%S}"
     release = ROOT / "dist" / name
     release.mkdir(parents=True, exist_ok=False)
     env = {**os.environ, "PYINSTALLER_CONFIG_DIR": str(ROOT / ".cache/pyinstaller"), "XDG_CACHE_HOME": str(ROOT / ".cache")}
@@ -38,7 +57,7 @@ def build(library=None):
         layouts = discover(library)
         profile = verify_rules(library)
         files = sorted({layout.path for layout in layouts})
-        preset = {"brand": config.get("brand", "Conversor de Bases"), "primary_color": config.get("primary_color", "#09695D"), "recognize_original_names": False, "families": {}}
+        preset = {"brand": config.get("brand", "Conversor de Bases"), "primary_color": config.get("primary_color", "#09695D"), "theme_mode": config.get("theme_mode", "light"), "recognize_original_names": False, "families": {}}
         logo = Path(config.get("logo_path", ""))
         if logo.is_file():
             relative_logo = "marca/logo" + logo.suffix.lower()
@@ -77,8 +96,9 @@ def build(library=None):
         (release / "library_preset.json").write_text(json.dumps(preset, ensure_ascii=False, indent=2), encoding="utf-8")
     else:
         shutil.copy2(ROOT / "#PLANILHAS DE BASE/VERSOES.md", release / "#PLANILHAS DE BASE/VERSOES.md")
+        shutil.copy2(ROOT / "packaging/brand.json", release / "library_preset.json")
     shutil.copytree(ROOT / "docs", release / "docs", ignore=shutil.ignore_patterns("*.png", "originais.sha256.json", "catalogo_modelos.json"))
-    (release / "LEIA-ME.txt").write_text("Conversor de Bases 1.1.0\n\nExtraia todo o ZIP em pasta gravável e abra " + executable + ".\nPython e bibliotecas estão incluídos. Mantenha regras e modelos ao lado do app.\nNa tela inicial você cria importações nomeadas com categorias e arquivos.\nBiblioteca contém modelos/regras; Aparência contém nome, cor global e logo de fundo.\nOs modelos deste pacote são cópias vazias, sem exemplos. Fontes originais do projeto não foram alteradas.\nEstado local fica em .local; não inclua essa pasta ao redistribuir.\nConsulte docs para regras, privacidade, manutenção e validação.\n", encoding="utf-8")
+    (release / "LEIA-ME.txt").write_text(f"Transmute {__version__}\n\nExtraia todo o ZIP em pasta gravável e abra " + executable + ".\nPython e bibliotecas estão incluídos. Mantenha regras e modelos ao lado do app.\nDashboard reúne atalhos, trabalhos e indicadores.\nBiblioteca contém modelos/regras; Aparência contém temas claro/escuro, destaque e logo.\nOs modelos deste pacote são cópias vazias, sem exemplos. Fontes originais do projeto não foram alteradas.\nEstado portátil fica em .local; não inclua essa pasta ao redistribuir.\nConsulte docs para regras, privacidade, manutenção e validação.\n", encoding="utf-8")
     licenses = release / "licencas"
     licenses.mkdir()
     import importlib.metadata
@@ -92,11 +112,11 @@ def build(library=None):
     # Test the packed executable with no project interpreter dependency.
     test_env = {**env, "CONVERSOR_STATE_DIR": str(ROOT / ".local/build-validation" / name), "QT_QPA_PLATFORM": "offscreen"}
     if not library:
-        subprocess.run([str(release / executable), "--self-test"], cwd=release, env=test_env, check=True, timeout=60)
-    subprocess.run([str(release / executable), "--smoke-test"], cwd=release, env=test_env, check=True, timeout=30)
+        validate_binary([str(release / executable), "--self-test", "--self-test-report", str(Path(test_env["CONVERSOR_STATE_DIR"]) / "selftest.json")], release, test_env, 120)
+    validate_binary([str(release / executable), "--smoke-test"], release, test_env, 60)
     manifest = {str(p.relative_to(release)): digest(p) for p in release.rglob("*") if p.is_file()}
     (release / "SHA256.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
-    archive = release.with_suffix(".zip")
+    archive = archive_path(release)
     with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zip:
         for path in sorted(release.rglob("*")):
             if path.is_file():

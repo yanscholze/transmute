@@ -33,6 +33,9 @@ class AppearancePane(QWidget):
         body.addWidget(text_label("Aparência", "title"))
         body.addWidget(text_label("Personalize o nome, a cor de toda a interface e a logo ao fundo.", "subtitle"))
         form = QFormLayout()
+        # Native font metrics differ; long rows wrap vertically on narrow windows.
+        form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
+        form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.brand = QLineEdit(config.get("brand", "Conversor de Bases"))
         form.addRow("Nome da aplicação", self.brand)
         self.mode = QComboBox()

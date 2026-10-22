@@ -69,9 +69,19 @@ def run(root, state):
         finally:
             session.close()
         # QtPdf is tested here because the packaged PDF viewer needs its plugin.
+        from PySide6.QtCore import QCoreApplication, QFile, QIODevice
         from PySide6.QtPdf import QPdfDocument
+        _application = QCoreApplication.instance() or QCoreApplication([])
+        device = QFile(str(pdf))
+        assert device.open(QIODevice.OpenModeFlag.ReadOnly)
         document = QPdfDocument()
-        assert document.load(str(pdf)) == QPdfDocument.Error.None_
-        assert document.pageCount() == 1
-        document.close()
+        try:
+            # Own the file device explicitly: Qt's filename overload may retain
+            # its internal QFile until destruction, locking PDFs on Windows.
+            document.load(device)
+            assert document.error() == QPdfDocument.Error.None_
+            assert document.pageCount() == 1
+        finally:
+            document.close()
+            device.close()
     print("SELFTEST OK: CSV/PDF, mapeamento, validação, exportação, relatório, QtPdf e zeros preservados.")

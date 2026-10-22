@@ -78,6 +78,7 @@ class FileSettings(QDialog):
 
 
 def open_pdf(path, parent=None):
+    from PySide6.QtCore import QFile, QIODevice
     from PySide6.QtPdf import QPdfDocument
     from PySide6.QtPdfWidgets import QPdfView
     dialog = QDialog(parent)
@@ -85,8 +86,11 @@ def open_pdf(path, parent=None):
     dialog.resize(1000, 800)
     layout = QVBoxLayout(dialog)
     document = QPdfDocument(dialog)
-    error = document.load(str(path))
-    if error != QPdfDocument.Error.None_:
+    device = QFile(str(path))
+    opened = device.open(QIODevice.OpenModeFlag.ReadOnly)
+    if opened:
+        document.load(device)
+    if not opened or document.error() != QPdfDocument.Error.None_:
         layout.addWidget(text_label("Não foi possível abrir o PDF original. Confira se o arquivo existe ou exige senha."))
     else:
         view = QPdfView(dialog)
@@ -94,4 +98,10 @@ def open_pdf(path, parent=None):
         view.setPageMode(QPdfView.PageMode.MultiPage)
         view.setZoomMode(QPdfView.ZoomMode.FitToWidth)
         layout.addWidget(view)
-    dialog.exec()
+    try:
+        dialog.exec()
+    finally:
+        # Closing the preview must immediately release Windows file locks.
+        document.close()
+        device.close()
+        dialog.deleteLater()

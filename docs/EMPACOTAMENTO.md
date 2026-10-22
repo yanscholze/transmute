@@ -1,5 +1,38 @@
 # Distribuição, atualizações e personalização
 
+## Instaladores 1.2
+
+O usuário aprovou o dashboard em 22/10/2026 e autorizou .exe/.rpm. Windows deve usar **Windows nativo**, sem Wine. `.github/workflows/build.yml` compila com Python/PyInstaller no runner Windows, cria Setup com NSIS e testa instalação silenciosa, hashes, self-test, abertura Qt e desinstalação preservando dados. O job Linux é independente (`fail-fast: false`). A execução do workflow não publica GitHub Release automaticamente.
+
+`scripts/package_installers.py` recebe um ZIP nativo produzido por build.py, verifica hashes, assinatura de formato PE/ELF e ausência de linhas nos modelos, adiciona o preset público de `packaging/brand.json` e `installation.json`, e cria novo instalador. Não lê estado pessoal, correções, credenciais ou importações reais. Arquivos finais ficam em `dist/releases/1.2.0/` e não são sobrescritos silenciosamente.
+
+Windows: executar `Transmute-1.2.0-Windows-x64-Setup.exe`. Instala para o usuário em `%LOCALAPPDATA%\Programs\Transmute`, com atalhos no menu Iniciar e desinstalador. Exige Windows 10/11 de 64 bits. Runtime é incluído; não exige Python ou Wine. Instalador não possui assinatura Authenticode neste projeto.
+
+Fedora: `sudo dnf install ./transmute-1.2.0-1.fc44.x86_64.rpm`. Arquivos imutáveis ficam em `/opt/transmute`, launcher em `/usr/bin/transmute` e atalho no menu de aplicativos. O RPM contém runtime Python/Qt; dependências gráficas do sistema são declaradas. É uma distribuição externa com runtime empacotado, não um pacote submetido ao repositório oficial Fedora. Campo LicenseRef-NotSpecified documenta a ausência de licença própria escolhida pelo titular, sem inventar uma licença para o código. Licenças das dependências continuam incluídas.
+
+`installation.json` seleciona estado por usuário: Windows `%LOCALAPPDATA%\Transmute`; Linux `${XDG_DATA_HOME:-~/.local/share}/transmute`. `CONVERSOR_STATE_DIR` continua tendo prioridade. Atualizar ou desinstalar não remove esses dados. O NSIS enumera somente arquivos da distribuição ao remover o programa; arquivos desconhecidos inseridos manualmente na instalação também não são apagados recursivamente. A distribuição ZIP continua portátil, com `.local` ao lado do executável.
+
+Para RPM, após obter o ZIP Linux nativo:
+
+```bash
+.venv/bin/python scripts/package_installers.py --linux-zip CAMINHO_DO_ZIP
+```
+
+Para Windows, execute no Windows com NSIS instalado:
+
+```powershell
+python scripts/package_installers.py --windows-zip CAMINHO_DO_ZIP --makensis "C:\Program Files (x86)\NSIS\makensis.exe"
+python scripts/validate_installer.py CAMINHO_DO_SETUP_EXE
+```
+
+`packaging/transmute.spec` desabilita strip do binário PyInstaller, preservando o runtime anexado. `packaging/windows.nsi` usa instalação por usuário. Receitas, preset e ícone são editáveis. Consulte VALIDACAO_FINAL.md para distinguir o que foi executado dos passos ainda pendentes.
+
+## Assets para download
+
+A entrega validada fica em `dist/releases/1.2.0/`, com os dois instaladores, `LEIA-ME-INSTALACAO.md`, `SHA256SUMS.txt` e evidências. Publique-os como assets de uma GitHub Release para obter links de download direto. Não versionar os binários grandes no histórico Git. O workflow autorizado gerou artefatos de Actions; nenhuma Release foi criada automaticamente.
+
+O EXE final vem do workflow 39830335195, commit 1a696c5. O RPM vem do ZIP Fedora `Transmute-1.2.0-Linux-x86_64-20261022-151945.zip`, da mesma revisão de código. Os documentos externos de entrega registram a validação após os builds; os documentos embutidos são o snapshot disponível durante a compilação. Veja VALIDACAO_FINAL.md para o registro consolidado.
+
 ## Build nativo
 
 Instale dependências de desenvolvimento no `.venv` e execute `python scripts/build.py` com esse Python. No Windows use `.venv\Scripts\python`; Linux usa `.venv/bin/python`.
@@ -8,7 +41,7 @@ PyInstaller inclui intérprete, dependências, módulos UI e perfil original. O 
 
 Cada release usa diretório timestamped em dist, preservando releases anteriores. O script testa o próprio binário com --self-test e --smoke-test e verifica integridade do ZIP. SHA256.json registra o conteúdo do pacote. Logs de build não comprovam execução em outro sistema.
 
-Build Windows exige Windows. Workflow `.github/workflows/build.yml` contém matriz Windows/Linux e pode ser disparado manualmente em um repositório GitHub. Nenhum workflow foi publicado/disparado nesta sessão. Binário local Linux foi construído no Fedora; compatibilidade com outras distribuições/versões de glibc requer teste ou build no runner mais antigo suportado.
+Build Windows exige Windows. Workflow `.github/workflows/build.yml` contém matriz Windows/Linux e pode ser disparado manualmente em um repositório GitHub. O workflow foi enviado à branch build/installers-1.2.0 e disparado com autorização do usuário. O RPM usa payload compilado nativamente no Fedora 44 (glibc 2.43); a receita declara esse mínimo. O ZIP do job Ubuntu é uma distribuição independente: no teste de compatibilidade, seu backend Qt/xcb falhou no Fedora, e ele não foi usado no RPM final. Compatibilidade com outras distribuições requer execução correspondente.
 
 ## Estrutura portátil
 
@@ -26,7 +59,7 @@ O app não depende de código-fonte, ambiente Python externo ou antigos arquivos
 
 Modelos e regras podem ser escolhidos em Biblioteca mesmo se as referências padrão estiverem ausentes. Não renomeie executável/dependências internas para personalizar: use nome, cor global e logo em Aparência. Para uma distribuição pré-configurada, forneça modelos/regras desejados e `regras_perfil.json` aprovado ao lado do executável. Novas famílias desconhecidas devem permanecer genéricas até configuração explícita.
 
-Não redistribua a pasta `.local` de uma instalação em uso: pode conter base temporária, mapeamentos, referências privadas e configurações. Para levar apenas identidade/configuração, configure uma instalação limpa. Assinatura de código, instalador MSI/AppImage/DEB/RPM e atualização automática não estão implementados; o pacote portátil é a unidade de entrega.
+Não redistribua a pasta `.local` de uma instalação em uso: pode conter base temporária, mapeamentos, referências privadas e configurações. Para levar apenas identidade/configuração, configure uma instalação limpa. Os instaladores EXE/RPM são descritos acima; assinatura de código, MSI/AppImage/DEB e atualização automática permanecem fora desta entrega.
 
 ## Distribuição de outra biblioteca/marca
 

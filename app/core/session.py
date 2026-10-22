@@ -5,7 +5,6 @@ deve fechá-la; processamento malsucedido remove o arquivo automaticamente.
 """
 import hashlib
 import json
-import sqlite3
 import tempfile
 from dataclasses import asdict
 from pathlib import Path
@@ -15,6 +14,7 @@ from app.core.importers.reader import records
 from app.core.mapping import validate_mapping
 from app.core.transformation.engine import transform
 from app.models import Control, Issue
+from app.storage.database import database
 
 
 class Session:
@@ -38,7 +38,7 @@ class Session:
             """)
 
     def connect(self):
-        return sqlite3.connect(self.path)
+        return database(self.path)
 
     def close(self):
         self.path.unlink(missing_ok=True)
