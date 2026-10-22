@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "source_sha256": "880fcecb7da61a654fcaf73ca9a450fbc3b3a501bc465780455e6a29da36e189",
+  "max_total_rows": 10000,
+  "conflicts": [
+    "COLUNAS_VAZIAS",
+    "ATIVO_SIM_ATIVO",
+    "TIPO_ITEM_DESCRICAO_CODIGO"
+  ],
+  "source": "INSTRUCOES_CONVERSOES.md"
+}
