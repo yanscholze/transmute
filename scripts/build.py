@@ -23,6 +23,11 @@ from app.core.catalog import digest, discover, rules_path, verify_rules, workspa
 from app import __version__  # noqa: E402
 
 
+def archive_path(directory):
+    """Append extension: version dots are not a filesystem suffix to replace."""
+    return directory.with_name(directory.name + ".zip")
+
+
 def build(library=None):
     system = platform.system()
     name = f"Transmute-{__version__}-{system}-{platform.machine()}-{datetime.now():%Y%m%d-%H%M%S}"
@@ -98,7 +103,7 @@ def build(library=None):
     subprocess.run([str(release / executable), "--smoke-test"], cwd=release, env=test_env, check=True, timeout=30)
     manifest = {str(p.relative_to(release)): digest(p) for p in release.rglob("*") if p.is_file()}
     (release / "SHA256.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
-    archive = release.with_suffix(".zip")
+    archive = archive_path(release)
     with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zip:
         for path in sorted(release.rglob("*")):
             if path.is_file():

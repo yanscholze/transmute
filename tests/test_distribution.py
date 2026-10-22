@@ -9,6 +9,12 @@ import pytest
 from app import paths
 from app.storage.database import database
 from scripts.package_installers import prepare_payload, write_manifest
+from scripts.build import archive_path
+
+
+def test_archive_name_preserves_version_platform_and_build_id(tmp_path):
+    folder = tmp_path / "Transmute-1.2.0-Windows-AMD64-20261022-150000"
+    assert archive_path(folder).name == "Transmute-1.2.0-Windows-AMD64-20261022-150000.zip"
 
 
 def test_database_closes_on_success_and_rolls_back_on_error(tmp_path):

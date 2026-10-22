@@ -293,7 +293,7 @@ Diálogo de consentimento com payload exato e aplicação de sugestões não con
 Aparência isolada do fluxo de importação, com prévia local e logo copiada.
 
 - `AppearancePane` (linha 16)
-  Métodos: `__init__`:19, `draft`:102, `refresh`:106, `choose_color`:114, `choose_logo`:119, `load_logo`:124, `remove_logo`:137, `save`:141.
+  Métodos: `__init__`:19, `draft`:105, `refresh`:109, `choose_color`:117, `choose_logo`:122, `load_logo`:127, `remove_logo`:140, `save`:144.
 
 ## app/ui/common.py
 
@@ -493,7 +493,8 @@ Build nativo e pacote portátil, sem copiar estado, secrets ou exemplos.
 Execute com o Python do .venv no SO alvo. PyInstaller não faz cross-compilation.
 Cada release ganha diretório novo; versões anteriores não são apagadas.
 
-- `build` (linha 26)
+- `archive_path` (linha 26): Append extension: version dots are not a filesystem suffix to replace.
+- `build` (linha 31)
 
 ## scripts/document_code.py
 
@@ -603,9 +604,10 @@ Dashboard usa metadados reais e não inventa taxa, atividade ou estado externo.
 
 Contratos de instalação e encerramento SQLite, independentes do SO do teste.
 
-- `test_database_closes_on_success_and_rolls_back_on_error` (linha 14)
-- `test_installed_state_is_outside_app_and_override_wins` (linha 31)
-- `test_installer_rechecks_native_zip_and_blank_templates` (linha 48)
+- `test_archive_name_preserves_version_platform_and_build_id` (linha 15)
+- `test_database_closes_on_success_and_rolls_back_on_error` (linha 20)
+- `test_installed_state_is_outside_app_and_override_wins` (linha 37)
+- `test_installer_rechecks_native_zip_and_blank_templates` (linha 54)
 
 ## tests/test_edges.py
 
