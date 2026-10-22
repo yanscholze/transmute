@@ -1,17 +1,21 @@
-"""Shell: trabalhos, biblioteca e aparência têm áreas próprias.
+"""Shell Soft UI: dashboard, sidebar recolhível e páginas operacionais.
 
 O worker único mantém cancelamento acessível. Aparência nunca reinicia uma
 importação; mudanças da biblioteca exigem nova validação do trabalho.
 """
 import json
 
-from PySide6.QtWidgets import QButtonGroup, QFrame, QHBoxLayout, QMainWindow, QProgressBar, QStackedWidget, QVBoxLayout, QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QHBoxLayout, QLineEdit, QMainWindow, QProgressBar, QStackedWidget, QVBoxLayout, QWidget
 
 from app.core.catalog import discover, workspace_config
 from app.storage.imports import ImportStore
-from app.storage.workspace import initialize
+from app.storage.workspace import initialize, save_config
 from app.ui.common import GridModel, Worker, button, table, text_label
-from app.ui.theme import Backdrop, stylesheet
+from app.ui.icons import icon
+from app.ui.navigation import DESTINATIONS, NavigationRail
+from app.ui.surfaces import ElidedLabel, SoftPanel
+from app.ui.theme import Backdrop, native_palette, palette, stylesheet
 
 
 class Window(QMainWindow):
@@ -27,23 +31,25 @@ class Window(QMainWindow):
         self.resize(1420, 940)
         self.setMinimumSize(1100, 760)
         shell = QWidget()
+        shell.setObjectName("shell")
         shell_box = QVBoxLayout(shell)
-        shell_box.setContentsMargins(0, 0, 0, 0)
+        shell_box.setContentsMargins(20, 20, 20, 8)
+        shell_box.setSpacing(18)
         self.body = QWidget()
-        body_box = QHBoxLayout(self.body)
+        body_box = QVBoxLayout(self.body)
         body_box.setContentsMargins(0, 0, 0, 0)
-        body_box.setSpacing(0)
-        sidebar = QFrame()
-        sidebar.setObjectName("sidebar")
-        sidebar.setFixedWidth(214)
-        nav = QVBoxLayout(sidebar)
-        nav.setContentsMargins(18, 24, 18, 22)
-        nav.setSpacing(10)
-        self.brand_label = text_label("Conversor de Bases", "brand")
-        nav.addWidget(self.brand_label)
-        nav.addWidget(text_label("Importações para o ERP"))
-        nav.addSpacing(30)
+        body_box.setSpacing(24)
+        body_box.addWidget(self.make_header())
+        work = QHBoxLayout()
+        work.setSpacing(20)
+        self.sidebar = NavigationRail(bool(store.setting("ui_sidebar_expanded", False)))
+        self.sidebar.selected.connect(self.navigate)
+        self.sidebar.expanded_changed.connect(lambda value: store.set_setting("ui_sidebar_expanded", value))
+        self.sidebar.exit_requested.connect(self.close)
+        self.nav_buttons = self.sidebar.buttons
+        work.addWidget(self.sidebar)
         self.pages = QStackedWidget()
+        from app.ui.dashboard import Dashboard
         from app.ui.imports_home import ImportsHome
         from app.ui.library import LibraryPane
         from app.ui.appearance import AppearancePane
@@ -57,33 +63,23 @@ class Window(QMainWindow):
         self.settings = SettingsPane(store, state, self.run_job, self.notify)
         self.history_page = self.make_history()
         self.detail = ImportDetail(self.root, state, self.layouts, store, self.import_store, self.run_job, self.notify)
-        self.detail.changed.connect(self.home.refresh)
-        self.detail.back_requested.connect(lambda: self.navigate(0))
-        for page in [self.home, self.library, self.appearance, self.settings, self.history_page, self.detail]:
+        self.detail.changed.connect(self.refresh_overview)
+        self.detail.back_requested.connect(lambda: self.navigate(1))
+        self.dashboard = Dashboard(self.root, self.import_store, store, self.navigate, self.new_import,
+                                   self.open_import, self.edit_rules_from_dashboard, self.notify)
+        for page in [self.dashboard, self.home, self.library, self.appearance, self.settings, self.history_page, self.detail]:
             self.pages.addWidget(page)
-        group = QButtonGroup(self)
-        group.setExclusive(True)
-        self.nav_buttons = []
-        for index, label in enumerate(["Importações", "Biblioteca", "Aparência", "IA e perfis", "Diagnóstico"]):
-            item = button(label, lambda checked=False, i=index: self.navigate(i))
-            item.setCheckable(True)
-            group.addButton(item)
-            nav.addWidget(item)
-            self.nav_buttons.append(item)
-        self.nav_buttons[0].setChecked(True)
-        nav.addStretch()
-        nav.addWidget(text_label("Conversão local\nOriginais preservados\n\nVersão 1.1.0"))
-        body_box.addWidget(sidebar)
         self.panel = Backdrop()
-        panel_box = QVBoxLayout(self.panel)
-        panel_box.setContentsMargins(28, 26, 28, 22)
-        panel_box.addWidget(self.pages)
-        body_box.addWidget(self.panel, 1)
+        self.panel_box = QVBoxLayout(self.panel)
+        self.panel_box.setContentsMargins(0, 0, 0, 0)
+        self.panel_box.addWidget(self.pages)
+        work.addWidget(self.panel, 1)
+        body_box.addLayout(work, 1)
         shell_box.addWidget(self.body, 1)
         statusbar = QWidget()
         status_layout = QHBoxLayout(statusbar)
-        status_layout.setContentsMargins(18, 8, 18, 8)
-        self.status = text_label("Pronto · crie ou abra uma importação", "muted")
+        status_layout.setContentsMargins(8, 0, 8, 0)
+        self.status = text_label("Pronto · processamento local · originais preservados", "smallText")
         self.progress = QProgressBar()
         self.progress.setFixedWidth(220)
         self.progress.setTextVisible(False)
@@ -97,6 +93,75 @@ class Window(QMainWindow):
         self.setCentralWidget(shell)
         self.apply_brand()
 
+    def make_header(self):
+        header = QWidget()
+        box = QHBoxLayout(header)
+        box.setContentsMargins(0, 0, 0, 0)
+        box.setSpacing(20)
+        brand = SoftPanel(pill=True)
+        brand.setFixedWidth(218)
+        line = QHBoxLayout(brand)
+        line.setContentsMargins(9, 8, 17, 8)
+        line.setSpacing(12)
+        self.avatar = text_label("C", "brandAvatar")
+        self.avatar.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.avatar.setFixedSize(46, 46)
+        self.brand_label = ElidedLabel("Conversor de Bases")
+        self.brand_label.setObjectName("brand")
+        line.addWidget(self.avatar)
+        line.addWidget(self.brand_label, 1)
+        box.addWidget(brand)
+        context = SoftPanel(pill=True)
+        row = QHBoxLayout(context)
+        row.setContentsMargins(25, 10, 20, 10)
+        title = QVBoxLayout()
+        title.setSpacing(1)
+        self.header_title = ElidedLabel("Dashboard")
+        self.header_title.setObjectName("headerTitle")
+        title.addWidget(self.header_title)
+        title.addWidget(text_label("Seu espaço de trabalho", "eyebrow"))
+        row.addLayout(title, 1)
+        self.search = QLineEdit()
+        self.search.setObjectName("globalSearch")
+        self.search.setPlaceholderText("Buscar importações…")
+        self.search.setAccessibleName("Buscar importações pelo nome; Enter para abrir os resultados")
+        self.search.setMaximumWidth(260)
+        self.search.returnPressed.connect(self.search_imports)
+        row.addWidget(self.search, 1)
+        box.addWidget(context, 1)
+        local = SoftPanel(pill=True)
+        right = QHBoxLayout(local)
+        right.setContentsMargins(16, 8, 10, 8)
+        right.setSpacing(10)
+        self.local_label = text_label("Processamento\nlocal", "localBadge")
+        right.addWidget(self.local_label)
+        self.theme_button = button("", self.toggle_theme)
+        self.theme_button.setObjectName("iconButton")
+        self.theme_button.setFixedSize(40, 40)
+        right.addWidget(self.theme_button)
+        box.addWidget(local)
+        return header
+
+    def search_imports(self):
+        self.home.filter.setCurrentIndex(0)
+        self.home.search.setText(self.search.text().strip())
+        self.navigate(1)
+
+    def toggle_theme(self):
+        config = workspace_config(self.root)
+        config["theme_mode"] = "light" if config.get("theme_mode", "light") == "dark" else "dark"
+        save_config(self.root, config)
+        self.appearance.mode.setCurrentIndex(self.appearance.mode.findData(config["theme_mode"]))
+        self.apply_brand()
+
+    def edit_rules_from_dashboard(self):
+        self.navigate(2)
+        self.library.edit_rules()
+
+    def refresh_overview(self):
+        self.home.refresh()
+        self.dashboard.refresh(self.layouts)
+
     def notify(self, message):
         from PySide6.QtWidgets import QMessageBox
         QMessageBox.information(self, self.windowTitle() or "Conversor de Bases", message)
@@ -104,33 +169,47 @@ class Window(QMainWindow):
     def navigate(self, index):
         if self.pages.currentWidget() is self.detail:
             self.detail.leave_editor()
-        self.nav_buttons[index].setChecked(True)
+        self.sidebar.set_current(index)
         if index == 0:
+            self.dashboard.refresh(self.layouts)
+        elif index == 1:
             self.home.refresh()
-        elif index == 3:
-            self.settings.refresh_profiles()
         elif index == 4:
+            self.settings.refresh_profiles()
+        elif index == 5:
             self.refresh_history()
         self.pages.setCurrentIndex(index)
+        self.header_title.setText(DESTINATIONS[index][0])
+        self.configure_backdrop()
+
+    def configure_backdrop(self):
         config = workspace_config(self.root)
-        self.panel.configure({**config, "logo_path": ""} if index == 2 else config)
+        dashboard = self.pages.currentWidget() is self.dashboard
+        if self.pages.currentWidget() is self.appearance:
+            config = {**config, "logo_path": ""}
+        self.panel.configure({**config, "panel_surface": not dashboard})
+        self.panel_box.setContentsMargins(*((0, 0, 0, 0) if dashboard else (20, 17, 24, 22)))
 
     def new_import(self):
+        if self.pages.currentWidget() is self.detail:
+            self.detail.leave_editor()
         from app.ui.import_wizard import ImportWizard
         if self.wizard is None:
             self.wizard = ImportWizard(self.import_store, self.layouts, self.notify)
             self.wizard.created.connect(self.import_created)
             self.wizard.cancelled.connect(self.cancel_wizard)
             self.pages.addWidget(self.wizard)
-        self.nav_buttons[0].setChecked(True)
+        self.sidebar.set_current(1)
         self.pages.setCurrentWidget(self.wizard)
+        self.header_title.setText("Nova importação")
+        self.configure_backdrop()
 
     def cancel_wizard(self):
         if self.wizard:
             self.pages.removeWidget(self.wizard)
             self.wizard.deleteLater()
             self.wizard = None
-        self.navigate(0)
+        self.navigate(1)
 
     def import_created(self, job):
         self.cancel_wizard()
@@ -140,15 +219,34 @@ class Window(QMainWindow):
     def open_import(self, identifier):
         self.detail.leave_editor()
         self.detail.set_job(self.import_store.get(identifier))
-        self.nav_buttons[0].setChecked(True)
+        self.sidebar.set_current(1)
         self.pages.setCurrentWidget(self.detail)
+        self.header_title.setText(self.detail.job["name"])
+        self.configure_backdrop()
 
     def apply_brand(self):
         config = workspace_config(self.root)
         self.setWindowTitle(config.get("brand", "Conversor de Bases"))
-        self.brand_label.setText(config.get("brand", "Conversor de Bases"))
-        self.setStyleSheet(stylesheet(config.get("primary_color", "#09695D")))
-        self.panel.configure({**config, "logo_path": ""} if self.pages.currentWidget() is self.appearance else config)
+        brand = config.get("brand", "Conversor de Bases")
+        self.brand_label.setText(brand)
+        self.avatar.setText(brand[:1].upper())
+        color, mode = config.get("primary_color", "#09695D"), config.get("theme_mode", "light")
+        self.setStyleSheet(stylesheet(color, mode))
+        self.setPalette(native_palette(color, mode))
+        self.sidebar.apply_theme(color, mode)
+        for panel in self.findChildren(SoftPanel):
+            panel.apply_theme(mode)
+        t = palette(color, mode)
+        self.theme_button.setIcon(icon("appearance", t["ink"], 21))
+        label = "Mudar para tema claro" if mode == "dark" else "Mudar para tema escuro"
+        self.theme_button.setAccessibleName(label)
+        self.theme_button.setToolTip(label)
+        if self.search.actions():
+            self.search.actions()[0].setIcon(icon("search", t["muted"], 18))
+        else:
+            self.search.addAction(icon("search", t["muted"], 18), QLineEdit.ActionPosition.LeadingPosition)
+        self.configure_backdrop()
+        self.dashboard.refresh(self.layouts)
 
     def reload_library(self):
         try:
@@ -168,6 +266,7 @@ class Window(QMainWindow):
             self.wizard.snapshot()
             self.wizard.layouts = self.layouts
             self.wizard.render_files()
+        self.refresh_overview()
 
     def run_job(self, task, callback, description, on_error=None):
         if self.worker is not None:

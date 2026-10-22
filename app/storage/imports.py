@@ -16,7 +16,8 @@ FAMILIES = {"veiculos": "Veículos", "clientes": "Clientes", "fornecedores": "Fo
 
 
 def now():
-    return datetime.now().astimezone().isoformat(timespec="seconds")
+    # Multiple saves/new jobs within one second must still sort chronologically.
+    return datetime.now().astimezone().isoformat(timespec="microseconds")
 
 
 class ImportStore:

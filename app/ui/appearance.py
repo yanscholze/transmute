@@ -5,12 +5,12 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QImageReader
-from PySide6.QtWidgets import QColorDialog, QComboBox, QFileDialog, QFormLayout, QHBoxLayout, QLineEdit, QSlider, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QColorDialog, QComboBox, QFileDialog, QFormLayout, QHBoxLayout, QLineEdit, QScrollArea, QSlider, QVBoxLayout, QWidget
 
 from app.core.catalog import workspace_config
 from app.storage.workspace import save_config, set_brand
 from app.ui.common import button, text_label
-from app.ui.theme import Backdrop
+from app.ui.theme import Backdrop, stylesheet
 
 
 class AppearancePane(QWidget):
@@ -18,25 +18,41 @@ class AppearancePane(QWidget):
 
     def __init__(self, root, notify):
         super().__init__()
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        outer.addWidget(self.scroll, 1)
         self.root, self.notify = root, notify
         config = workspace_config(root)
         self.logo_path = config.get("logo_path", "")
-        body = QVBoxLayout(self)
+        inner = QWidget()
+        self.scroll.setWidget(inner)
+        body = QVBoxLayout(inner)
         body.setSpacing(16)
         body.addWidget(text_label("Aparência", "title"))
         body.addWidget(text_label("Personalize o nome, a cor de toda a interface e a logo ao fundo.", "subtitle"))
         form = QFormLayout()
         self.brand = QLineEdit(config.get("brand", "Conversor de Bases"))
         form.addRow("Nome da aplicação", self.brand)
+        self.mode = QComboBox()
+        self.mode.addItem("Claro · superfícies suaves", "light")
+        self.mode.addItem("Escuro · superfícies suaves", "dark")
+        self.mode.setCurrentIndex(max(0, self.mode.findData(config.get("theme_mode", "light"))))
+        self.mode.setAccessibleName("Tema claro ou escuro")
+        form.addRow("Tema", self.mode)
         colors = QHBoxLayout()
         self.color = QLineEdit(config.get("primary_color", "#09695D"))
         self.color.setMaximumWidth(150)
         colors.addWidget(self.color)
         colors.addWidget(button("Escolher cor…", self.choose_color))
-        for name, value in [("Verde", "#09695D"), ("Azul", "#305AA1"), ("Roxo", "#7450A5"), ("Grafite", "#38434E")]:
-            colors.addWidget(button(name, lambda checked=False, v=value: self.color.setText(v)))
         colors.addStretch()
-        form.addRow("Cor da interface", colors)
+        form.addRow("Cor de destaque", colors)
+        presets = QHBoxLayout()
+        for name, value in [("Verde", "#09695D"), ("Azul", "#305AA1"), ("Roxo", "#7450A5"), ("Grafite", "#38434E")]:
+            presets.addWidget(button(name, lambda checked=False, v=value: self.color.setText(v)))
+        presets.addStretch()
+        form.addRow("Sugestões de cor", presets)
         logo = QHBoxLayout()
         logo.addWidget(button("Inserir logo…", self.choose_logo))
         logo.addWidget(button("Remover logo", self.remove_logo))
@@ -73,22 +89,26 @@ class AppearancePane(QWidget):
         preview_body.addStretch()
         body.addWidget(self.preview, 1)
         self.feedback = text_label("As mudanças só são aplicadas ao clicar em Salvar aparência.", "muted")
-        body.addWidget(self.feedback)
-        body.addWidget(button("Salvar aparência", self.save, True), alignment=Qt.AlignmentFlag.AlignRight)
+        outer.addWidget(self.feedback)
+        self.save_button = button("Salvar aparência", self.save, True)
+        outer.addWidget(self.save_button, alignment=Qt.AlignmentFlag.AlignRight)
         for widget in [self.size, self.opacity]:
             widget.valueChanged.connect(self.refresh)
         self.position.currentIndexChanged.connect(self.refresh)
         self.color.textChanged.connect(self.refresh)
+        self.mode.currentIndexChanged.connect(self.refresh)
         self.refresh()
 
     def draft(self):
-        return {"brand": self.brand.text(), "primary_color": self.color.text(), "logo_path": self.logo_path,
+        return {"brand": self.brand.text(), "primary_color": self.color.text(), "theme_mode": self.mode.currentData(), "logo_path": self.logo_path,
                 "logo_size": self.size.value(), "logo_opacity": self.opacity.value(), "logo_position": self.position.currentData()}
 
     def refresh(self, *args):
         self.size_label.setText(f"{self.size.value()}% da largura")
         self.opacity_label.setText(f"{self.opacity.value()}%")
         self.preview.configure(self.draft())
+        # Draft mode may differ from the saved app mode until the user saves.
+        self.preview.setStyleSheet(stylesheet(self.color.text(), self.mode.currentData()))
         self.logo_label.setText(Path(self.logo_path).name if self.logo_path else "Nenhuma logo selecionada")
 
     def choose_color(self):
@@ -125,6 +145,6 @@ class AppearancePane(QWidget):
             config.update(self.draft())
             save_config(self.root, config)
             self.changed.emit()
-            self.feedback.setText("Aparência salva. Cor aplicada à navegação, superfícies, campos, tabelas e botões.")
+            self.feedback.setText("Aparência salva. Tema, cor de destaque e logo aplicados a toda a interface.")
         except ValueError as error:
             self.notify(str(error))

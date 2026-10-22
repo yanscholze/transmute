@@ -48,7 +48,15 @@ def test_desktop_full_flow_and_review(qtbot, tmp_path, make_xlsx, monkeypatch):
     assert conversion.next.isEnabled()
     assert next(conversion.sessions[0].rows())["values"]["Razão Social / Nome"] == "Pessoa revisada sintética"
     (ROOT / "docs").mkdir(exist_ok=True)
-    window.grab().save(str(ROOT / "docs/interface-revisao.png"))
+    window.grab().save(str(ROOT / "docs/interface-revisao-dashboard.png"))
+    from app.core.catalog import workspace_config
+    from app.storage.workspace import save_config
+    config = workspace_config(window.root)
+    config["theme_mode"] = "dark"
+    save_config(window.root, config)
+    window.apply_brand()
+    qtbot.wait(30)
+    window.grab().save(str(ROOT / "docs/interface-revisao-escuro.png"))
     conversion.close_sessions()
     window.close()
     assert not messages

@@ -7,10 +7,11 @@ import logging
 from threading import Event
 
 from PySide6.QtCore import QAbstractTableModel, Qt, QThread, Signal
-from PySide6.QtGui import QColor
+from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QAbstractItemView, QLabel, QPushButton, QTableView
 
 from app.models import Cancelled, Control
+from app.ui.theme import luminance, palette
 
 
 class Worker(QThread):
@@ -53,7 +54,12 @@ class GridModel(QAbstractTableModel):
         if role in {Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.ToolTipRole}:
             return str(self.rows[index.row()][index.column()])
         if role == Qt.ItemDataRole.ForegroundRole and index.column() == 1 and self.statuses:
-            return QColor({"ERRO": "#B42318", "AVISO": "#8A4B06", "OK": "#09695D"}.get(self.statuses[index.row()], "#243342"))
+            # Review tables inherit the window's native palette; use brighter
+            # semantic colors in dark mode instead of illegible dark red/green.
+            parent = self.parent()
+            dark = parent is not None and luminance(parent.palette().color(QPalette.ColorRole.Base)) < .2
+            t = palette("#09695D", "dark" if dark else "light")
+            return QColor({"ERRO": t["error"], "AVISO": t["warning"], "OK": t["success"]}.get(self.statuses[index.row()], t["ink"]))
         return None
 
     def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):

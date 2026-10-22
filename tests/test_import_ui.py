@@ -20,7 +20,7 @@ def make_window(qtbot, tmp_path, monkeypatch):
 
 def test_home_shows_imports_and_wizard_validates(qtbot, tmp_path, monkeypatch):
     window, messages = make_window(qtbot, tmp_path, monkeypatch)
-    assert window.pages.currentWidget() is window.home
+    assert window.pages.currentWidget() is window.dashboard
     assert window.home.content.currentIndex() == 0
     window.new_import()
     wizard = window.wizard
@@ -46,14 +46,14 @@ def test_named_multi_file_flow_and_saved_pending_correction(qtbot, tmp_path, mak
     wizard.name.setText("Cliente sintético — migração")
     wizard.categories["veiculos"].setChecked(True)
     wizard.categories["produtos"].setChecked(True)
-    window.grab().save(str(ROOT / "docs/interface-categorias-v1.1.png"))
+    window.grab().save(str(ROOT / "docs/interface-categorias-dashboard.png"))
     wizard.advance()
     car = make_xlsx(["descricao"], [["Veículo sintético"]], "carros.xlsx")
     products = make_xlsx(["Descrição", "Tipo do item"], [["Serviço sintético", "Serviço"]], "servicos.xlsx")
     wizard.add_files([str(car), str(products)])
     category = wizard.controls[1][0]
     category.setCurrentIndex(category.findData("produtos"))
-    window.grab().save(str(ROOT / "docs/interface-arquivos-v1.1.png"))
+    window.grab().save(str(ROOT / "docs/interface-arquivos-dashboard.png"))
     wizard.advance()
     assert wizard.pages.currentIndex() == 2
     wizard.options.ack.setChecked(True)
@@ -63,7 +63,7 @@ def test_named_multi_file_flow_and_saved_pending_correction(qtbot, tmp_path, mak
     assert window.pages.currentWidget() is detail and len(detail.sessions) == 2
     assert detail.job["status"] == "Pronta para exportar"
     assert len(window.import_store.list()) == 1
-    window.grab().save(str(ROOT / "docs/interface-resumo-v1.1.png"))
+    window.grab().save(str(ROOT / "docs/interface-resumo-dashboard.png"))
     detail.grid.setCurrentIndex(detail.grid.model().index(0, 0))
     detail.review_selected()
     qtbot.waitUntil(lambda: window.worker is None, timeout=10000)
@@ -78,10 +78,10 @@ def test_named_multi_file_flow_and_saved_pending_correction(qtbot, tmp_path, mak
     first = detail.job["attachments"][0]
     assert next(detail.sessions[first["id"]].rows())["values"]["descricao"] == "Veículo revisado sintético"
     assert detail.export_button.isEnabled()
-    window.navigate(0)
+    window.navigate(1)
     assert window.home.grid.model().rowCount() == 1
     assert window.home.grid.model().rows[0][0] == "Cliente sintético — migração"
-    window.grab().save(str(ROOT / "docs/interface-importacoes-v1.1.png"))
+    window.grab().save(str(ROOT / "docs/interface-importacoes-dashboard.png"))
     window.close()
     assert not messages
 
@@ -114,8 +114,8 @@ def test_global_color_logo_size_and_reopen(qtbot, tmp_path, monkeypatch):
     assert palette("#7450A5")["nav"] in window.styleSheet()
     assert palette("#7450A5")["bg"] in window.styleSheet()
     assert window.windowTitle() == "Marca sintética"
-    window.navigate(2)
-    window.grab().save(str(ROOT / "docs/interface-aparencia-v1.1.png"))
+    window.navigate(3)
+    window.grab().save(str(ROOT / "docs/interface-aparencia-dashboard.png"))
     window.close()
     reopened = Window(ROOT, tmp_path / "state", LocalStore(tmp_path / "state"))
     qtbot.addWidget(reopened)
@@ -128,6 +128,6 @@ def test_global_color_logo_size_and_reopen(qtbot, tmp_path, monkeypatch):
 def test_light_and_dark_colors_have_distinct_surfaces():
     assert foreground("#FFFFFF") == "#101820"
     assert foreground("#101820") == "#FFFFFF"
-    assert palette("#305AA1")["bg"] != palette("#09695D")["bg"]
-    assert palette("#305AA1")["nav"] != palette("#09695D")["nav"]
+    assert palette("#305AA1")["tint"] != palette("#09695D")["tint"]
+    assert palette("#305AA1", "dark")["bg"] != palette("#305AA1", "light")["bg"]
     assert "#101820" in stylesheet("#FFFFFF")

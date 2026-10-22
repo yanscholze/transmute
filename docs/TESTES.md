@@ -22,6 +22,8 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python run.py --smoke-test
 
 `test_import_ui.py`: início com trabalhos, validação dos passos, fluxo completo com duas categorias, revisão/correção pendente persistida, reprocessamento, cor global, logo copiada com tamanho/intensidade e retomada após reabrir. Capturas das telas são sintéticas.
 
+`test_dashboard.py`: fórmula pelo último estado de cada trabalho, ausência de resultados, 0% real, contraste em ambos os modos e cores extremas, sidebar com nomes acessíveis e preferência persistida, navegação para todas as páginas, atalhos, busca, abertura de trabalho recente, copiar/abrir caminhos e editor das regras. Trocar claro/escuro/acento preserva uma sessão realmente processada. Captura temas, menu expandido e janela 1100×760, verificando ausência de rolagem horizontal no dashboard. Usa estado isolado, sem inserir exemplos no banco real. A documentação explica o comportamento em DASHBOARD.md.
+
 `--self-test`: teste sintético de leitura CSV/PDF, conversão/saída/relatórios e QtPdf disponível no próprio binário sem pytest. O PDF mínimo é criado no diretório temporário pelo próprio teste, sem biblioteca de geração adicional.
 
 PDFs em `tests/fixtures` são exclusivamente sintéticos, com grades/descritivos artificiais. O leitor é exercitado em documento de duas páginas e documento sem tabela. Isso não prova reconhecimento de qualquer layout externo ou OCR.

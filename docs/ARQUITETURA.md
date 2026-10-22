@@ -26,6 +26,8 @@ Fontes: [Qt for Python](https://doc.qt.io/qtforpython-6/), [PyInstaller: distrib
 
 `app/ui`: `imports_home.py` lista trabalhos; `import_wizard.py` recolhe nome/categorias/arquivos/regras; `import_detail.py` possui sessões e integra a revisão avançada existente. `library.py` cuida dos modelos/regras; `appearance.py` cuida da marca; `theme.py` deriva tokens e desenha logo atrás do conteúdo. `window.py` navega e administra worker único/cancelamento. Há modelos Qt de tabela, perfis e diagnóstico separados do início.
 
+Na revisão visual posterior à versão 1.1, `dashboard.py` passa a ser a entrada: compõe últimos trabalhos, indicadores e atalhos a partir de metadados existentes. `storage/dashboard.py` define a agregação sem Qt. `navigation.py` mantém a sidebar recolhível; `surfaces.py` e `icons.py` fornecem painéis e vetores locais. `theme.py` separa tema claro/escuro de cor de destaque, com QSS e QPalette. Aparência e navegação não recriam sessões de processamento. O contrato detalhado e a fórmula dos indicadores estão em DASHBOARD.md. A etapa visual aguarda aprovação antes de empacotar .exe/.rpm.
+
 `app/ai`: providers independentes para OpenAI, Gemini, Claude e CLI restrita quando comprovada; schema JSON fechado, sanitização central e confirmação antes de envio. Nunca converter registro via modelo. Apenas sugestões com IDs opacos de coluna, sem nomes/células brutas enviados por padrão. Retorno só sugere mapeamentos. Chaves em keyring ou somente memória, nunca config. Fallback explícito por usuário e somente entre provedores consentidos.
 
 ## Ordem de implementação

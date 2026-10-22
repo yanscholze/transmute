@@ -229,6 +229,16 @@ Teste sintético disponível também no executável distribuído, sem pytest.
 - `synthetic_pdf` (linha 15): PDF mínimo com grade, sem gerador externo nem dados reais no binário.
 - `run` (linha 39)
 
+## app/storage/dashboard.py
+
+Indicadores derivados do último estado salvo de cada trabalho.
+
+Não contamos eventos técnicos como novas importações nem medimos aceite no ERP.
+Trabalhos aguardando/interrompidos não possuem resultado concluído e ficam fora
+do denominador. A ausência de resultados produz None, nunca sucesso fictício.
+
+- `summarize` (linha 11)
+
 ## app/storage/imports.py
 
 Importações nomeadas: referências persistentes sem duplicar bases completas.
@@ -240,8 +250,8 @@ A tabela nova preserva histórico,
 perfis e configurações existentes na mesma base SQLite.
 
 - `now` (linha 18)
-- `ImportStore` (linha 22)
-  Métodos: `__init__`:23, `create`:33, `save`:48, `get`:53, `list`:60.
+- `ImportStore` (linha 23)
+  Métodos: `__init__`:24, `create`:34, `save`:49, `get`:54, `list`:61.
 
 ## app/storage/local.py
 
@@ -274,7 +284,7 @@ Diálogo de consentimento com payload exato e aplicação de sugestões não con
 Aparência isolada do fluxo de importação, com prévia local e logo copiada.
 
 - `AppearancePane` (linha 16)
-  Métodos: `__init__`:19, `draft`:84, `refresh`:88, `choose_color`:94, `choose_logo`:99, `load_logo`:104, `remove_logo`:117, `save`:121.
+  Métodos: `__init__`:19, `draft`:102, `refresh`:106, `choose_color`:114, `choose_logo`:119, `load_logo`:124, `remove_logo`:137, `save`:141.
 
 ## app/ui/common.py
 
@@ -283,13 +293,13 @@ Tarefas em thread e tabelas de apresentação sem regras de negócio.
 Erro é mostrado ao operador, mas o log contém só o tipo da exceção. O modelo
 de tabela recebe apenas a página atual, sem duplicar uma base inteira.
 
-- `Worker` (linha 16)
-  Métodos: `__init__`:21, `run`:26.
-- `GridModel` (linha 37)
-  Métodos: `__init__`:38, `rowCount`:44, `columnCount`:47, `data`:50, `headerData`:59.
-- `table` (linha 64)
-- `button` (linha 76)
-- `text_label` (linha 86)
+- `Worker` (linha 17)
+  Métodos: `__init__`:22, `run`:27.
+- `GridModel` (linha 38)
+  Métodos: `__init__`:39, `rowCount`:45, `columnCount`:48, `data`:51, `headerData`:65.
+- `table` (linha 70)
+- `button` (linha 82)
+- `text_label` (linha 92)
 
 ## app/ui/conversion.py
 
@@ -301,6 +311,21 @@ exportação até revalidar; uma chamada de IA nunca escreve uma célula.
 - `ConversionPane` (linha 22)
   Métodos: `__init__`:26, `release_sessions`:78, `panes`:82, `previous`:85, `advance`:89, `prepare_mapping`:111, `process`:123, `processed`:137, `correct`:155, `do_export`:162, `exported`:177, `update_step`:183, `ai_suggest`:193, `close_sessions`:198.
 
+## app/ui/dashboard.py
+
+Visão geral operacional: metadados reais, atalhos e fontes configuradas.
+
+O dashboard não lê células, não processa bases e não guarda cópias do histórico.
+Usa o catálogo já carregado pelo shell e o manifesto dos trabalhos. Caminhos
+podem ser copiados ou abertos localmente; o editor continua na Biblioteca.
+
+- `date_label` (linha 23)
+- `decorative` (linha 30): Filhos visuais não interceptam o clique/teclado do botão que os contém.
+- `PathAccess` (linha 36)
+  Métodos: `__init__`:37, `configure`:59, `copy_path`:69, `open_folder`:74.
+- `Dashboard` (linha 83)
+  Métodos: `__init__`:84, `panel_box`:112, `link`:118, `make_recent`:123, `make_launch`:141, `make_shortcuts`:186, `row`:201, `make_models`:225, `make_rules`:240, `refresh`:255.
+
 ## app/ui/file_settings.py
 
 Classificação de arquivo e visualizador PDF local, sem abrir navegador externo.
@@ -308,6 +333,15 @@ Classificação de arquivo e visualizador PDF local, sem abrir navegador externo
 - `FileSettings` (linha 10)
   Métodos: `__init__`:11, `populate`:50, `browse`:58, `save`:65.
 - `open_pdf` (linha 80)
+
+## app/ui/icons.py
+
+Ícones vetoriais locais, com traço uniforme e cores do tema.
+
+Primitivas SVG evitam dependência de fontes, emojis ou downloads. O texto
+acessível pertence ao controle que usa o ícone, nunca ao desenho decorativo.
+
+- `icon` (linha 30): Renderize em dobro para manter linhas nítidas também em escala alta.
 
 ## app/ui/import_detail.py
 
@@ -364,6 +398,13 @@ ficam restritos ao fingerprint do destino para evitar reaplicação absoluta.
 - `MappingPane` (linha 21)
   Métodos: `__init__`:22, `render`:43, `manual`:72, `get_decisions`:80, `update_summary`:83, `save_profile`:88, `load_profile`:98.
 
+## app/ui/navigation.py
+
+Sidebar recolhível com navegação por teclado e preferência local persistida.
+
+- `NavigationRail` (linha 14)
+  Métodos: `__init__`:19, `toggle_expanded`:62, `set_current`:67, `apply_theme`:71, `render`:75.
+
 ## app/ui/options.py
 
 Coleta escolhas e evidências por conversão; o core é quem aplica as regras.
@@ -391,29 +432,45 @@ Configura provedores/cofre, testa com estrutura sintética e administra perfis l
 Default style for entrypoints; windows derive their palette from saved appearance.
 
 
+## app/ui/surfaces.py
+
+Superfícies suaves e texto truncável compartilhados pelo shell/dashboard.
+
+Sombras são pintadas no próprio painel. Efeitos que cacheiam o subtree inteiro
+podem recortar filhos após redimensionar/navegar; aqui somente a superfície é
+desenhada, preservando a pintura normal e as hitboxes de cada controle filho.
+
+- `SoftPanel` (linha 14)
+  Métodos: `__init__`:15, `apply_theme`:23, `paintEvent`:27.
+- `ElidedLabel` (linha 50): Rótulo de uma linha; mantém nome/caminho completo no tooltip e a11y.
+  Métodos: `__init__`:52, `setText`:58, `render`:64, `resizeEvent`:67, `sizeHint`:71.
+
 ## app/ui/theme.py
 
-Paleta derivada de uma cor e marca d'água desenhada atrás do conteúdo.
+Tema claro/escuro com acento independente e marca d'água atrás do conteúdo.
 
-Todas as superfícies usam os mesmos tokens. O contraste do botão é calculado
-para cores claras/escuras; logo conserva proporção e não recebe eventos.
+Superfícies neutras seguem a referência Soft UI. O acento colore ações, foco e
+realces nos dois modos; contraste é calculado para qualquer cor configurada.
 
 - `mix` (linha 13)
-- `foreground` (linha 18)
-- `palette` (linha 25)
-- `stylesheet` (linha 35)
-- `Backdrop` (linha 83)
-  Métodos: `__init__`:84, `configure`:88, `paintEvent`:94.
+- `luminance` (linha 18)
+- `contrast` (linha 24)
+- `foreground` (linha 29)
+- `palette` (linha 34)
+- `native_palette` (linha 54): Cubra popups, indicadores e controles nativos que não usam somente QSS.
+- `stylesheet` (linha 69)
+- `Backdrop` (linha 153)
+  Métodos: `__init__`:154, `configure`:158, `paintEvent`:164.
 
 ## app/ui/window.py
 
-Shell: trabalhos, biblioteca e aparência têm áreas próprias.
+Shell Soft UI: dashboard, sidebar recolhível e páginas operacionais.
 
 O worker único mantém cancelamento acessível. Aparência nunca reinicia uma
 importação; mudanças da biblioteca exigem nova validação do trabalho.
 
-- `Window` (linha 17)
-  Métodos: `__init__`:18, `notify`:100, `navigate`:104, `new_import`:118, `cancel_wizard`:128, `import_created`:135, `open_import`:140, `apply_brand`:146, `reload_library`:153, `run_job`:172, `job_error`:188, `job_finished`:195, `cancel_job`:206, `make_history`:211, `refresh_history`:220, `closeEvent`:228.
+- `Window` (linha 21)
+  Métodos: `__init__`:22, `make_header`:96, `search_imports`:145, `toggle_theme`:150, `edit_rules_from_dashboard`:157, `refresh_overview`:161, `notify`:165, `navigate`:169, `configure_backdrop`:185, `new_import`:193, `cancel_wizard`:207, `import_created`:214, `open_import`:219, `apply_brand`:227, `reload_library`:251, `run_job`:271, `job_error`:287, `job_finished`:294, `cancel_job`:305, `make_history`:310, `refresh_history`:319, `closeEvent`:327.
 
 ## scripts/audit_models.py
 
@@ -496,6 +553,18 @@ Módulo da camada tests.
 - `test_source_mutation_blocks_export` (linha 236)
 - `test_decimal_no_rounding_or_ambiguous_guess` (linha 243)
 
+## tests/test_dashboard.py
+
+Dashboard usa metadados reais e não inventa taxa, atividade ou estado externo.
+
+- `window_for` (linha 18)
+- `create_job` (linha 31)
+- `test_success_uses_latest_jobs_not_technical_events` (linha 40)
+- `test_theme_contrast_and_independent_accent` (linha 51)
+- `test_sidebar_expansion_navigation_search_and_paths` (linha 62)
+- `test_light_dark_custom_accent_keeps_sessions_and_creates_previews` (linha 108)
+- `test_appearance_draft_and_save_remain_accessible_in_small_window` (linha 158)
+
 ## tests/test_edges.py
 
 Módulo da camada tests.
@@ -537,8 +606,8 @@ Fluxo amigável e aparência são verificados em widgets Qt reais, offscreen.
 Módulo da camada tests.
 
 - `test_desktop_full_flow_and_review` (linha 9)
-- `test_initial_rule_editor_saves_revision_without_touching_original` (linha 57)
-- `test_bad_model_folder_is_recoverable` (linha 83)
+- `test_initial_rule_editor_saves_revision_without_touching_original` (linha 65)
+- `test_bad_model_folder_is_recoverable` (linha 91)
 
 ## tests/test_workspace.py
 

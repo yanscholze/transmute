@@ -1,6 +1,6 @@
 # Conversor de Bases
 
-Aplicativo desktop local para preparar bases para importação em ERP. Windows e Linux, com conversão determinística, revisão dos resultados, relatórios e IA opcional. Na versão 1.1, a tela inicial reúne importações nomeadas; cada trabalho possui categorias, arquivos, andamento e resultados próprios. Biblioteca e aparência ficam em áreas separadas.
+Aplicativo desktop local para preparar bases para importação em ERP. Windows e Linux, com conversão determinística, revisão dos resultados, relatórios e IA opcional. O dashboard inicial reúne atalhos, últimas importações, indicadores e fontes configuradas. A área Importações mantém trabalhos nomeados, com categorias, arquivos, andamento e resultados próprios. Biblioteca e aparência ficam em áreas separadas.
 
 Pasta atual do projeto: `/home/yanscholze/Documentos/Company/Conversor` (renomeada de `Importações` em 22/10/2026). As referências da biblioteca local e os scripts do ambiente virtual foram ajustados ao novo caminho. O documento original de regras mantém sua descrição histórica, sem alteração. Backups da configuração anterior ficam em `.local/relocation-backup-*`; logs e artefatos antigos conservam os caminhos de quando foram gerados.
 
@@ -28,7 +28,11 @@ Use sempre o mesmo ambiente virtual para instalar, testar e executar. O desenvol
 
 ## Navegação e white label
 
-**Importações** é a tela inicial: lista nome, categorias, quantidade de arquivos, andamento e atualização de cada trabalho. Possui pesquisa por nome, filtro por andamento e o botão **Iniciar nova importação**. Clique duas vezes em uma linha para abrir seu resumo. O histórico técnico anterior continua disponível em **Diagnóstico**.
+**Dashboard** é a tela inicial, com identidade Soft UI: fundo neutro, painéis arredondados, sombras suaves e destaque personalizável. Mostra quatro importações recentes, total/prontas/pendências, taxa de sucesso local, atalhos para todas as áreas e os caminhos das regras/planilhas de base. Caminhos podem ser copiados ou abertos no gerenciador de arquivos; o atalho das regras abre o editor existente. Sem trabalhos, exibe instruções para começar e nenhum percentual fictício.
+
+A **sidebar** alterna entre ícones e ícones com rótulos pelo botão de menu; sua escolha é lembrada localmente. Ícones possuem nomes acessíveis e tooltips. A busca do cabeçalho abre os resultados em Importações ao pressionar Enter. O botão de tema alterna claro/escuro sem interromper sessões.
+
+**Importações** lista nome, categorias, quantidade de arquivos, andamento e atualização de cada trabalho. Possui pesquisa por nome, filtro por andamento e o botão **Nova importação**. Clique duas vezes em uma linha para abrir seu resumo. O histórico técnico anterior continua disponível em **Diagnóstico**.
 
 Em **Biblioteca**, configure os modelos de destino e as regras. As planilhas recebidas de um cliente são anexadas à importação; modelos são a estrutura da saída. A biblioteca aceita uma pasta externa ou cópias locais dos modelos selecionados:
 
@@ -37,9 +41,13 @@ Em **Biblioteca**, configure os modelos de destino e as regras. As planilhas rec
 - **Regras aplicáveis:** escolha Genérico para layouts personalizados ou associe explicitamente uma família conhecida. A associação define regras de domínio, portanto precisa corresponder à documentação da biblioteca.
 - **Selecionar arquivo .md / Abrir e editar regras:** documentação e perfil executável lado a lado. Uma revisão aprovada cria novas cópias locais. Os arquivos de referência escolhidos permanecem intactos.
 
-Em **Aparência**, configure nome, cor global e logo de fundo. A paleta altera navegação, fundos, campos, tabelas, abas, foco e botões; o texto dos botões se adapta a cores claras ou escuras. A logo aceita PNG, JPG e WebP, até 10 MB e 16 milhões de pixels. É copiada para a biblioteca local, sem alterar a imagem recebida. Ajuste **tamanho (10–100% da área disponível)**, **intensidade (0–25%)** e posição central ou inferior direita, conferindo a prévia antes de salvar. A imagem mantém sua proporção e fica atrás do conteúdo. Há opção para removê-la. Alterar aparência preserva o processamento em curso.
+Em **Aparência**, configure nome, **tema claro ou escuro**, **cor de destaque** e logo de fundo. O laranja da referência é um exemplo; nenhuma cor é obrigatória. Os temas usam superfícies neutras próprias, enquanto a cor escolhida aparece nas ações, marca, realces e indicadores nos dois modos. Texto e foco usam contraste adequado, inclusive com destaques claros/escuros. Campos, tabelas, abas, popups e barras de rolagem acompanham o tema. A prévia também mostra o modo escolhido antes de salvar.
+
+A logo aceita PNG, JPG e WebP, até 10 MB e 16 milhões de pixels. É copiada para a biblioteca local, sem alterar a imagem recebida. Ajuste **tamanho (10–100% da área disponível)**, **intensidade (0–25%)** e posição central ou inferior direita, conferindo a prévia antes de salvar. A imagem mantém sua proporção e fica atrás do conteúdo. Há opção para removê-la. Alterar aparência preserva o processamento em curso.
 
 Nome técnico do executável, serviço de cofre e formato de relatórios são estáveis para preservar compatibilidade. A identidade configurada também pode ser incluída em um pacote white label.
+
+A taxa do dashboard é **(prontas + exportadas) / trabalhos com resultado**. Entram no denominador os estados Pronta para exportar, Exportada e Revisar pendências; aguardando e interrompidos ficam fora. Cada trabalho conta uma vez, pelo último estado salvo. A taxa não mede aceitação no ERP. Detalhes, estados e manutenção em [docs/DASHBOARD.md](docs/DASHBOARD.md).
 
 Modelos novos começam em modo genérico. Esse modo preserva valores, aplica integridade técnica e executa apenas regras declaradas no perfil. Não adivinha regras tributárias, campos obrigatórios ou defaults a partir dos exemplos.
 
@@ -47,7 +55,7 @@ O editor não interpreta prosa arbitrária como código. Quando mudar o Markdown
 
 ## Iniciar e acompanhar uma importação
 
-1. Clique em **Iniciar nova importação**, dê um nome ao trabalho e selecione suas categorias: veículos, clientes, fornecedores, produtos/serviços, OS, vendas, contas ou outra tabela.
+1. Clique em **Nova importação** no dashboard ou na lista, dê um nome ao trabalho e selecione suas categorias: veículos, clientes, fornecedores, produtos/serviços, OS, vendas, contas ou outra tabela.
 2. Arraste ou selecione todos os arquivos recebidos: XLSX, XLS, CSV/TSV e PDF. Cada arquivo possui **título**, **categoria**, **modelo de saída** e **finalidade**. Há pelo menos um arquivo por categoria escolhida. Um documento de apoio permanece listado, mas não gera registros; essa decisão é explícita.
 3. Confira as regras aplicáveis no último passo. Colunas vazias começam omitidas; para clientes, decida expressamente sobre ATIVO. Registre conferências geográficas/fontes quando exigidas. O assistente mostra opções pertinentes às categorias selecionadas.
 4. Inicie a importação. O sistema processa os arquivos em segundo plano e abre o resumo. Todas as abas de planilhas e tabelas detectadas em PDFs ganham entradas próprias. Uma falha fica visível no arquivo correspondente, preservando os demais.
@@ -117,7 +125,7 @@ app/
     exporters/         Divisão, XLSX textual e relatórios
   ai/                  Providers, schema, sanitização, cofre e fallback
   storage/             Biblioteca, revisões, trabalhos nomeados e histórico
-  ui/                  Início, assistente, resumo, revisão, aparência e biblioteca
+  ui/                  Dashboard, sidebar, assistente, revisão, aparência e biblioteca
 tests/                 Dados sintéticos gerados durante os testes
 scripts/               Inventário, documentação e build
 docs/                  Descoberta, arquitetura e guias de manutenção
@@ -139,6 +147,8 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python run.py --smoke-test
 O build gera executável, modelos derivados **sem exemplos**, regras e documentação em `dist/`. Os modelos originais permanecem intactos. A receita pode ser executada em Windows e Linux; há workflow de CI com matriz dos dois sistemas. Compilação é nativa: executar a receita no Linux não produz nem comprova um EXE Windows.
 
 Veja [docs/EMPACOTAMENTO.md](docs/EMPACOTAMENTO.md), [docs/TESTES.md](docs/TESTES.md) e [docs/VALIDACAO_FINAL.md](docs/VALIDACAO_FINAL.md) para resultados efetivamente obtidos e limitações.
+
+**Etapa atual:** dashboard e temas implementados na fonte para aprovação visual. O usuário pediu que os novos pacotes **.exe e .rpm** sejam iniciados somente após essa aprovação. Os ZIPs anteriores em dist continuam sendo as entregas anteriores; esta revisão não os substitui. Para avaliar a interface nova, execute `run.py` pelo `.venv` acima.
 
 ## Arquivos fornecidos preservados
 

@@ -12,6 +12,8 @@ Por padrão, `.local/` ao lado do projeto/executável. `CONVERSOR_STATE_DIR` per
 - `sessions/review-*.sqlite3`: dados sensíveis temporários de revisão. Removidos ao encerrar conversão/janela normalmente.
 - `diagnostico.log`: eventos mínimos com rotação, sem linhas de planilha, payloads, caminhos completos ou texto de exceções.
 
+O dashboard usa os manifestos e configurações já persistidos; não cria telemetria, não consulta provedores e não lê amostras de bases para calcular indicadores. A setting `ui_sidebar_expanded` guarda apenas um booleano; `theme_mode` em workspace.json guarda claro/escuro. A taxa representa resultado local, não confirmação do ERP. Os caminhos configurados ficam visíveis na tela: copiar coloca o caminho no clipboard do sistema; abrir pasta usa o gerenciador local. As capturas de documentação do dashboard são geradas com estado e nomes sintéticos, separados dos trabalhos reais.
+
 Permissões de diretórios novos restringem acesso quando suportado. Não há criptografia de toda a sessão/relatórios no disco. Use volume/conta de sistema com proteção adequada. Encerramento abrupto pode deixar dados de sessão. Não apague sessões enquanto outra instância estiver aberta. Remoção de arquivo não comprova apagamento físico em SSD/backups.
 
 ## Credenciais

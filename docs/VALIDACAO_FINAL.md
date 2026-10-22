@@ -1,5 +1,15 @@
 # Validação final — 22/10/2026
 
+## Revisão do dashboard — fonte pronta para aprovação visual
+
+Em 22/10/2026, após a referência visual e a correção sobre temas, **82 testes passaram em 22,01 s** (68 anteriores + 14 casos/variações do dashboard). Lint passou, índice de símbolos foi regenerado e os **38 hashes originais** permanecem preservados. O self-test CSV/PDF/QtPdf da fonte passou. A abertura gráfica nativa Linux com saída automática também passou, além das verificações Qt offscreen.
+
+Implementado e exercitado: dashboard inicial, sidebar recolhível com preferência persistida, atalhos para todas as áreas, quatro trabalhos recentes com abertura direta, busca por nome no cabeçalho, taxa calculada dos últimos estados sem percentual fictício, caminhos de modelos/regras com copiar/abrir, editor de regras, temas claro/escuro, cor livre nos dois modos, persistência e prévia de aparência. Troca de tema/acento preservou uma sessão processada. Aparência mantém Salvar em rodapé fixo e campos em área rolável; o dashboard não cria rolagem horizontal em 1100×760, inclusive com menu expandido.
+
+Telas claras/escuras, menu expandido, janela compacta, estado vazio e revisão avançada foram capturados e inspecionados. As capturas compartilháveis usam apenas dados sintéticos em estado isolado. A pintura dos painéis não cacheia seus controles filhos, evitando recortes encontrados durante navegação/redimensionamento. As cores de erro/aviso/sucesso da revisão também acompanham o modo.
+
+Fonte e documentação estão disponíveis para avaliação. **Nenhum novo .exe, .rpm ou ZIP foi gerado nesta revisão**, conforme a instrução de aguardar aprovação da interface. Os pacotes listados abaixo são registros de entregas anteriores. Abertura Linux não comprova execução Windows nem aceitação no ERP. Detalhes e fórmula: DASHBOARD.md.
+
 ## Versão 1.1 — fluxo por importação e aparência
 
 Em 22/10/2026, **68 testes passaram** na fonte Linux, incluindo os 56 anteriores e 12 novos casos de trabalhos/PDF/UI (última suíte: 18,61 s). O lint passou e o índice de código foi regenerado. O self-test da fonte passou com CSV, PDF sintético posicional, zeros textuais, exportação, relatórios e carregamento QtPdf. Nenhum dado real ou chamada externa foi usado. Os 38 hashes das referências originais foram conferidos novamente, sem alterações.

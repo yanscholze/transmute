@@ -52,6 +52,16 @@ UI divide biblioteca, entradas, mapeamento, decisões, revisão, configuração 
 
 `theme.py` concentra tokens derivados da cor. `Backdrop` pinta a marca antes dos filhos, preserva proporção e limita a área vertical. Os widgets continuam recebendo eventos normalmente. `AppearancePane` valida raster, copia logo para assets e salva parâmetros; não descarte sessões ao aplicar marca. Biblioteca, assistente e detalhes não devem implementar uma segunda paleta.
 
+## Dashboard e temas
+
+O dashboard inicial agrega manifestos pelo último estado, sem tratar histórico técnico como tentativas novas. `storage/dashboard.summarize` concentra a fórmula; nenhuma porcentagem fixa deve aparecer na UI. `Dashboard.refresh` usa o catálogo já descoberto, atualiza resumos e valida a revisão das regras; não percorre células das bases. Chamadas partem da navegação e dos sinais de trabalho/biblioteca.
+
+`DESTINATIONS` em navigation.py corresponde às primeiras seis páginas do shell: Dashboard, Importações, Biblioteca, Aparência, IA/perfis, Diagnóstico. Revisão e assistente são páginas internas de Importações. Cabeçalho e sidebar são desabilitados junto do conteúdo durante worker; Cancelar permanece no rodapé. A preferência de expansão é uma setting local sem credencial.
+
+`palette(color, mode)`, `stylesheet(color, mode)` e `native_palette(color, mode)` compartilham tokens. Defaults preservam chamadas antigas com apenas uma cor. O modo claro/escuro controla neutros e texto; o destaque continua livre. O helper de contraste protege texto das ações e foco. `AppearancePane.refresh` aplica tema do rascunho à própria prévia; `Window.apply_brand` aplica somente configuração salva e preserva sessões. Aparência separa área rolável de campos/prévia e rodapé fixo de feedback/Salvar. `GridModel` escolhe cores semânticas conforme a paleta herdada da tabela, sem acoplar dados ao arquivo de configuração.
+
+O QSS define mínimos dos botões com layouts internos (`newImportTile`, `recentRow`, `shortcutRow`): o `min-height` global pode sobrescrever um mínimo programático durante polish. Preserve esses mínimos para não recortar rótulos. `SoftPanel` pinta sombras sem `QGraphicsEffect`: cachear o subtree de painéis com campos/ações produzia recortes após navegar/redimensionar. Não animar nem atrasar ações para esconder falha de geometria. Veja DASHBOARD.md e test_dashboard.py.
+
 ## Atualizar e reempacotar
 
 1. Leia descoberta, arquitetura, conflitos e validação final.
