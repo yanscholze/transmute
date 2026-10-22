@@ -150,7 +150,7 @@ O build gera executável, modelos derivados **sem exemplos**, regras e documenta
 
 Veja [docs/EMPACOTAMENTO.md](docs/EMPACOTAMENTO.md), [docs/TESTES.md](docs/TESTES.md) e [docs/VALIDACAO_FINAL.md](docs/VALIDACAO_FINAL.md) para resultados efetivamente obtidos e limitações.
 
-**Etapa atual:** interface aprovada pelo usuário em 22/10/2026; instaladores 1.2 em preparação e validação nos respectivos sistemas. Os ZIPs anteriores em dist são preservados. Resultado efetivamente obtido consta em VALIDACAO_FINAL.md; executar workflow não publica uma Release automaticamente.
+**Etapa atual:** instaladores 1.2.0 gerados e validados no Windows nativo e no Fedora 44. Downloads locais em `dist/releases/1.2.0/`, com guia e SHA256SUMS.txt, prontos para anexar aos assets de uma GitHub Release. Os ZIPs anteriores foram preservados. Foram 87 testes na fonte e 87 no Windows; evidências e limites em [docs/VALIDACAO_FINAL.md](docs/VALIDACAO_FINAL.md). A Release não foi publicada automaticamente.
 
 ## Arquivos fornecidos preservados
 

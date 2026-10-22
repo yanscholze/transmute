@@ -27,6 +27,12 @@ python scripts/validate_installer.py CAMINHO_DO_SETUP_EXE
 
 `packaging/transmute.spec` desabilita strip do binário PyInstaller, preservando o runtime anexado. `packaging/windows.nsi` usa instalação por usuário. Receitas, preset e ícone são editáveis. Consulte VALIDACAO_FINAL.md para distinguir o que foi executado dos passos ainda pendentes.
 
+## Assets para download
+
+A entrega validada fica em `dist/releases/1.2.0/`, com os dois instaladores, `LEIA-ME-INSTALACAO.md`, `SHA256SUMS.txt` e evidências. Publique-os como assets de uma GitHub Release para obter links de download direto. Não versionar os binários grandes no histórico Git. O workflow autorizado gerou artefatos de Actions; nenhuma Release foi criada automaticamente.
+
+O EXE final vem do workflow 39830335195, commit 1a696c5. O RPM vem do ZIP Fedora `Transmute-1.2.0-Linux-x86_64-20261022-151945.zip`, da mesma revisão de código. Os documentos externos de entrega registram a validação após os builds; os documentos embutidos são o snapshot disponível durante a compilação. Veja VALIDACAO_FINAL.md para o registro consolidado.
+
 ## Build nativo
 
 Instale dependências de desenvolvimento no `.venv` e execute `python scripts/build.py` com esse Python. No Windows use `.venv\Scripts\python`; Linux usa `.venv/bin/python`.

@@ -33,3 +33,10 @@ PDFs em `tests/fixtures` são exclusivamente sintéticos, com grades/descritivos
 Execute em máquina Windows e Linux alvo; confira abertura, escala de tela, drag and drop, seleção de diretórios, CSV com acentos, base real autorizada, cofre do sistema e cancelamento. Valide relatórios e faça importação parcial no ERP. Requisitos do ERP ausentes na documentação precisam ser confirmados e adicionados ao perfil. Testes locais não provam aceitação do ERP nem disponibilidade de provedores externos.
 
 `test_distribution.py`: fechamento determinístico SQLite com rollback/handles liberados; estado instalado fora do programa com override explícito; staging com hashes, modelo vazio e recusa de ZIP inseguro. O workflow Windows executa a suíte nativamente e valida instalar, rodar e remover o Setup sem apagar dados.
+
+
+## Distribuição 1.2 concluída
+
+87 testes na fonte Fedora e 87 no runner Windows nativo. `test_import_ui.py` verifica também que ciclos de widgets aposentados são coletados na thread gráfica, com GC suspenso no worker e restaurado ao terminar. O self-test da fonte e do executável verifica a liberação dos PDFs ao sair do diretório temporário.
+
+Windows: NSIS instalado e removido no próprio runner, hashes e conversões conferidos, interface capturada com backend `windows`. Fedora 44: RPM instalado/removido em container, executado por usuário comum; self-test, Qt offscreen/xcb em Xvfb, `rpm -V` e preservação de estado passaram. Comandos, versões, workflow e limites em VALIDACAO_FINAL.md. Não executar scripts de instaladores dentro de Wine como substituto dessa validação.
