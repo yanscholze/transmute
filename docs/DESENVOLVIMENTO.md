@@ -82,3 +82,12 @@ O índice completo de símbolos está em CODIGO.md. Os módulos são comentados 
 ## Distribuição instalada 1.2
 
 `storage/database.py` fecha conexões após commit/rollback. O contexto de sqlite3 sozinho não fecha handles, causando WinError 32 no Windows ao remover sessões. Todos os consumidores continuam usando `with connect() as db`. `installation.json` separa estado instalado por usuário; ZIPs mantêm o comportamento portátil. Receitas e validação ficam em packaging/, package_installers.py e validate_installer.py. Windows usa runner nativo, sem Wine.
+
+
+## Ciclo de vida nativo (1.2)
+
+Conexões SQLite usam o contexto de `storage/database.py`: commit/rollback seguido de fechamento determinístico. O contexto original de sqlite3 não fecha o handle por si só, impedindo remover sessões no Windows. O visualizador e o self-test PDF mantêm um `QFile` próprio, fechado em finally junto do documento QtPdf, liberando o arquivo ao sair da prévia.
+
+`Window.run_job` coleta ciclos Python na thread gráfica antes de iniciar a tarefa e suspende a coleta automática até `job_finished`, que restaura o estado anterior. Python 3.14 coletou wrappers Qt aposentados durante parsing XLSX no worker, causando uma falha nativa intermitente; objetos gráficos precisam ser destruídos na thread da UI. Não chamar `gc.collect()` dentro de workers. Referências comuns continuam sendo liberadas normalmente; o adiamento vale apenas para ciclos e dura a operação única em curso.
+
+O entrypoint `run.py` transforma falhas dos modos sintéticos --self-test/--smoke-test em saída com erro e diagnóstico opcional (`CONVERSOR_DIAGNOSTIC_FILE`). Isso evita o diálogo modal do executável windowed do Windows bloqueando o CI. Esse arquivo só é solicitado pelo harness com dados sintéticos; não exporta dados reais da interface.

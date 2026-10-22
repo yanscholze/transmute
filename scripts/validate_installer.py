@@ -31,7 +31,7 @@ def validate(installer):
         assert executable.is_file()
         manifest = json.loads((installed / "SHA256.json").read_text(encoding="utf-8"))
         assert all(digest(installed / key) == value for key, value in manifest.items())
-        env = {**os.environ, "LOCALAPPDATA": str(work / "user"), "QT_QPA_PLATFORM": "offscreen"}
+        env = {**os.environ, "LOCALAPPDATA": str(work / "user"), "QT_QPA_PLATFORM": "windows"}
         env.pop("CONVERSOR_STATE_DIR", None)
         report = work / "selftest.json"
         subprocess.run([str(executable), "--self-test", "--self-test-report", str(report)], check=True, env=env, timeout=90)

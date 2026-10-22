@@ -478,8 +478,8 @@ Shell Soft UI: dashboard, sidebar recolhível e páginas operacionais.
 O worker único mantém cancelamento acessível. Aparência nunca reinicia uma
 importação; mudanças da biblioteca exigem nova validação do trabalho.
 
-- `Window` (linha 21)
-  Métodos: `__init__`:22, `make_header`:96, `search_imports`:145, `toggle_theme`:150, `edit_rules_from_dashboard`:157, `refresh_overview`:161, `notify`:165, `navigate`:169, `configure_backdrop`:185, `new_import`:193, `cancel_wizard`:207, `import_created`:214, `open_import`:219, `apply_brand`:227, `reload_library`:251, `run_job`:271, `job_error`:287, `job_finished`:294, `cancel_job`:305, `make_history`:310, `refresh_history`:319, `closeEvent`:327.
+- `Window` (linha 22)
+  Métodos: `__init__`:23, `make_header`:97, `search_imports`:146, `toggle_theme`:151, `edit_rules_from_dashboard`:158, `refresh_overview`:162, `notify`:166, `navigate`:170, `configure_backdrop`:186, `new_import`:194, `cancel_wizard`:208, `import_created`:215, `open_import`:220, `apply_brand`:228, `reload_library`:252, `run_job`:272, `job_error`:296, `job_finished`:303, `cancel_job`:317, `make_history`:322, `refresh_history`:331, `closeEvent`:339.
 
 ## scripts/audit_models.py
 
@@ -645,6 +645,7 @@ Fluxo amigável e aparência são verificados em widgets Qt reais, offscreen.
 - `test_named_multi_file_flow_and_saved_pending_correction` (linha 42)
 - `test_global_color_logo_size_and_reopen` (linha 89)
 - `test_light_and_dark_colors_have_distinct_surfaces` (linha 128)
+- `test_worker_defers_qt_cycle_collection_to_gui_thread` (linha 136): Unreachable widgets must never be finalized by Python's worker GC.
 
 ## tests/test_ui.py
 

@@ -4,6 +4,7 @@ O worker único mantém cancelamento acessível. Aparência nunca reinicia uma
 importação; mudanças da biblioteca exigem nova validação do trabalho.
 """
 import json
+import gc
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QHBoxLayout, QLineEdit, QMainWindow, QProgressBar, QStackedWidget, QVBoxLayout, QWidget
@@ -277,6 +278,14 @@ class Window(QMainWindow):
         self.progress.setRange(0, 0)
         self.progress.show()
         self.cancel.show()
+        # Python's cyclic collector can otherwise destroy unreachable Qt
+        # wrappers on the worker thread (observed crash with Python 3.14).
+        # Reclaim old UI cycles here and defer automatic collection until the
+        # worker finishes; only this window launches one worker at a time.
+        self.gc_was_enabled = gc.isenabled()
+        if self.gc_was_enabled:
+            gc.collect()
+            gc.disable()
         self.worker = Worker(task, self)
         self.worker.result.connect(callback)
         self.worker.error.connect(self.job_error)
@@ -294,6 +303,9 @@ class Window(QMainWindow):
     def job_finished(self):
         self.worker.deleteLater()
         self.worker, self.error_callback = None, None
+        if self.gc_was_enabled:
+            gc.enable()
+            gc.collect()  # QThread.finished is delivered on the GUI thread.
         self.body.setEnabled(True)
         self.progress.hide()
         self.cancel.hide()
