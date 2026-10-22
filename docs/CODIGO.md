@@ -511,10 +511,10 @@ Arquivos finais nunca substituem uma release existente silenciosamente.
 
 - `write_manifest` (linha 26)
 - `prepare_payload` (linha 31): Only native binaries and blank templates are admitted into an installer.
-- `nsis_escape` (linha 67)
-- `windows_installer` (linha 71)
-- `rpm_installer` (linha 88)
-- `main` (linha 108)
+- `nsis_escape` (linha 79)
+- `windows_installer` (linha 83)
+- `rpm_installer` (linha 100)
+- `main` (linha 120)
 
 ## scripts/validate_installer.py
 

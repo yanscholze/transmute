@@ -58,6 +58,18 @@ def prepare_payload(archive, staging, system):
             book.close()
     (payload / "installation.json").write_text(json.dumps({"version": __version__, "state_mode": "user"}), encoding="utf-8")
     shutil.copy2(ROOT / "packaging/brand.json", payload / "library_preset.json")
+    # Installed copies use per-user state, unlike the source portable ZIP.
+    state = "%LOCALAPPDATA%\\Transmute" if system == "Windows" else "${XDG_DATA_HOME:-~/.local/share}/transmute"
+    (payload / "LEIA-ME.txt").write_text(
+        f"Transmute {__version__} — instalação {system}\n\n"
+        "Abra Transmute pelo menu de aplicativos. Python e Qt estão incluídos.\n"
+        "Dashboard reúne importações e atalhos; Biblioteca permite escolher modelos e editar regras.\n"
+        "Aparência permite temas claro/escuro, destaque e logo personalizáveis.\n"
+        f"Dados e preferências ficam em {state}, fora da pasta do programa.\n"
+        "Atualizar ou desinstalar preserva esses dados. Os modelos distribuídos estão vazios.\n"
+        "Consulte docs para regras, privacidade, manutenção e empacotamento.\n",
+        encoding="utf-8",
+    )
     # ZIP does not reliably retain Unix execute bits; restore only our executable.
     executable.chmod(0o755)
     write_manifest(payload)

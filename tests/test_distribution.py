@@ -71,6 +71,7 @@ def test_installer_rechecks_native_zip_and_blank_templates(tmp_path, make_xlsx):
     assert json.loads((result / "installation.json").read_text())["state_mode"] == "user"
     assert json.loads((result / "library_preset.json").read_text())["brand"] == "Transmute"
     assert not (result / ".local").exists()
+    assert "%LOCALAPPDATA%\\Transmute" in (result / "LEIA-ME.txt").read_text(encoding="utf-8")
     bad = tmp_path / "bad.zip"
     with zipfile.ZipFile(bad, "w") as packed:
         packed.writestr("../escape.txt", "synthetic")
