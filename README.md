@@ -8,7 +8,7 @@ Pasta atual do projeto: `/home/yanscholze/Documentos/Company/Conversor` (renomea
 
 No pacote Linux, extraia o ZIP em uma pasta gravável e execute `ConversorDeBases`. O pacote inclui Python e as bibliotecas; não exige instalação de Python. No Windows, o mesmo processo usa `ConversorDeBases.exe`, gerado pelo build nativo Windows.
 
-A distribuição 1.2 também tem instalador Windows (`Transmute-1.2.0-Windows-x64-Setup.exe`) e RPM Fedora (`transmute-1.2.0-1.fc44.x86_64.rpm`). Windows é compilado/testado em runner Windows nativo, sem Wine. No Fedora instale com `sudo dnf install ./NOME_DO_PACOTE.rpm` e abra Transmute no menu. Os instaladores mantêm estado por usuário fora da pasta do programa; detalhes e receitas estão em [docs/EMPACOTAMENTO.md](docs/EMPACOTAMENTO.md).
+A distribuição 1.3 tem instalador Windows (`Transmute-1.3.0-Windows-x64-Setup.exe`) e RPM Fedora (`transmute-1.3.0-1.fc44.x86_64.rpm`). Windows é compilado/testado em runner Windows nativo, sem Wine. No Fedora instale com `sudo dnf install ./NOME_DO_PACOTE.rpm` e abra Transmute no menu. Os instaladores mantêm estado por usuário fora da pasta do programa; detalhes e receitas estão em [docs/EMPACOTAMENTO.md](docs/EMPACOTAMENTO.md).
 
 Para desenvolvimento, dentro desta pasta:
 
@@ -158,7 +158,7 @@ O build gera executável, modelos derivados **sem exemplos**, regras e documenta
 
 Veja [docs/EMPACOTAMENTO.md](docs/EMPACOTAMENTO.md), [docs/TESTES.md](docs/TESTES.md) e [docs/VALIDACAO_FINAL.md](docs/VALIDACAO_FINAL.md) para resultados efetivamente obtidos e limitações.
 
-**Etapa atual:** Estúdio 1.3 implementado, com validação e novos builds em andamento. A distribuição 1.2 permanece preservada. Estado de cada versão, resultados executados e limites estão em [docs/VALIDACAO_FINAL.md](docs/VALIDACAO_FINAL.md). Nenhuma Release é publicada automaticamente.
+**Etapa atual:** Estúdio 1.3 implementado, com 110 testes e instaladores Windows/Fedora validados. A distribuição 1.2 permanece preservada. Estado de cada versão, resultados executados e limites estão em [docs/VALIDACAO_FINAL.md](docs/VALIDACAO_FINAL.md). Nenhuma Release é publicada automaticamente.
 
 ## Arquivos fornecidos preservados
 

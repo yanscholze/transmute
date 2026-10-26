@@ -6,11 +6,11 @@ A versão 1.3 adiciona o Estúdio IA e corrige referências temporárias de perf
 
 O usuário aprovou o dashboard em 22/10/2026 e autorizou .exe/.rpm. Windows deve usar **Windows nativo**, sem Wine. `.github/workflows/build.yml` compila com Python/PyInstaller no runner Windows, cria Setup com NSIS e testa instalação silenciosa, hashes, self-test, abertura Qt e desinstalação preservando dados. O job Linux é independente (`fail-fast: false`). A execução do workflow não publica GitHub Release automaticamente.
 
-`scripts/package_installers.py` recebe um ZIP nativo produzido por build.py, verifica hashes, assinatura de formato PE/ELF e ausência de linhas nos modelos, adiciona o preset público de `packaging/brand.json` e `installation.json`, e cria novo instalador. Não lê estado pessoal, correções, credenciais ou importações reais. Arquivos finais ficam em `dist/releases/1.2.0/` e não são sobrescritos silenciosamente.
+`scripts/package_installers.py` recebe um ZIP nativo produzido por build.py, verifica hashes, assinatura de formato PE/ELF e ausência de linhas nos modelos, adiciona o preset público de `packaging/brand.json` e `installation.json`, e cria novo instalador. Não lê estado pessoal, correções, credenciais ou importações reais. Arquivos finais ficam em `dist/releases/1.3.0/` e não são sobrescritos silenciosamente.
 
-Windows: executar `Transmute-1.2.0-Windows-x64-Setup.exe`. Instala para o usuário em `%LOCALAPPDATA%\Programs\Transmute`, com atalhos no menu Iniciar e desinstalador. Exige Windows 10/11 de 64 bits. Runtime é incluído; não exige Python ou Wine. Instalador não possui assinatura Authenticode neste projeto.
+Windows: executar `Transmute-1.3.0-Windows-x64-Setup.exe`. Instala para o usuário em `%LOCALAPPDATA%\Programs\Transmute`, com atalhos no menu Iniciar e desinstalador. Exige Windows 10/11 de 64 bits. Runtime é incluído; não exige Python ou Wine. Instalador não possui assinatura Authenticode neste projeto.
 
-Fedora: `sudo dnf install ./transmute-1.2.0-1.fc44.x86_64.rpm`. Arquivos imutáveis ficam em `/opt/transmute`, launcher em `/usr/bin/transmute` e atalho no menu de aplicativos. O RPM contém runtime Python/Qt; dependências gráficas do sistema são declaradas. É uma distribuição externa com runtime empacotado, não um pacote submetido ao repositório oficial Fedora. Campo LicenseRef-NotSpecified documenta a ausência de licença própria escolhida pelo titular, sem inventar uma licença para o código. Licenças das dependências continuam incluídas.
+Fedora: `sudo dnf install ./transmute-1.3.0-1.fc44.x86_64.rpm`. Arquivos imutáveis ficam em `/opt/transmute`, launcher em `/usr/bin/transmute` e atalho no menu de aplicativos. O RPM contém runtime Python/Qt; dependências gráficas do sistema são declaradas. É uma distribuição externa com runtime empacotado, não um pacote submetido ao repositório oficial Fedora. Campo LicenseRef-NotSpecified documenta a ausência de licença própria escolhida pelo titular, sem inventar uma licença para o código. Licenças das dependências continuam incluídas.
 
 `installation.json` seleciona estado por usuário: Windows `%LOCALAPPDATA%\Transmute`; Linux `${XDG_DATA_HOME:-~/.local/share}/transmute`. `CONVERSOR_STATE_DIR` continua tendo prioridade. Atualizar ou desinstalar não remove esses dados. O NSIS enumera somente arquivos da distribuição ao remover o programa; arquivos desconhecidos inseridos manualmente na instalação também não são apagados recursivamente. A distribuição ZIP continua portátil, com `.local` ao lado do executável.
 
@@ -31,9 +31,9 @@ python scripts/validate_installer.py CAMINHO_DO_SETUP_EXE
 
 ## Assets para download
 
-A entrega validada fica em `dist/releases/1.2.0/`, com os dois instaladores, `LEIA-ME-INSTALACAO.md`, `SHA256SUMS.txt` e evidências. Publique-os como assets de uma GitHub Release para obter links de download direto. Não versionar os binários grandes no histórico Git. O workflow autorizado gerou artefatos de Actions; nenhuma Release foi criada automaticamente.
+A entrega validada fica em `dist/releases/1.3.0/`, com os dois instaladores, `LEIA-ME-INSTALACAO.md`, `SHA256SUMS.txt` e evidências. Publique-os como assets de uma GitHub Release para obter links de download direto. Não versionar os binários grandes no histórico Git. O workflow autorizado gerou artefatos de Actions; nenhuma Release foi criada automaticamente.
 
-O EXE final vem do workflow 39830335195, commit 1a696c5. O RPM vem do ZIP Fedora `Transmute-1.2.0-Linux-x86_64-20261022-151945.zip`, da mesma revisão de código. Os documentos externos de entrega registram a validação após os builds; os documentos embutidos são o snapshot disponível durante a compilação. Veja VALIDACAO_FINAL.md para o registro consolidado.
+Na entrega histórica 1.2, o EXE veio do workflow 39830335195, commit 1a696c5. O RPM 1.2 veio do ZIP Fedora `Transmute-1.2.0-Linux-x86_64-20261022-151945.zip`, da mesma revisão. A entrega 1.3 usa o workflow 40403060850 e o ZIP Fedora `Transmute-1.3.0-Linux-x86_64-20261026-181712.zip`, ambos a partir de f8e2cb1. Os documentos externos de entrega registram a validação após os builds; os documentos embutidos são o snapshot disponível durante a compilação. Veja VALIDACAO_FINAL.md para o registro consolidado.
 
 ## Build nativo
 
@@ -43,7 +43,7 @@ PyInstaller inclui intérprete, dependências, módulos UI e perfil original. O 
 
 Cada release usa diretório timestamped em dist, preservando releases anteriores. O script testa o próprio binário com --self-test e --smoke-test e verifica integridade do ZIP. SHA256.json registra o conteúdo do pacote. Logs de build não comprovam execução em outro sistema.
 
-Build Windows exige Windows. Workflow `.github/workflows/build.yml` contém matriz Windows/Linux e pode ser disparado manualmente em um repositório GitHub. O workflow foi enviado à branch build/installers-1.2.0 e disparado com autorização do usuário. O RPM usa payload compilado nativamente no Fedora 44 (glibc 2.43); a receita declara esse mínimo. O ZIP do job Ubuntu é uma distribuição independente: no teste de compatibilidade, seu backend Qt/xcb falhou no Fedora, e ele não foi usado no RPM final. Compatibilidade com outras distribuições requer execução correspondente.
+Build Windows exige Windows. Workflow `.github/workflows/build.yml` contém matriz Windows/Linux e pode ser disparado manualmente em um repositório GitHub. Os workflows foram disparados com autorização do usuário; a revisão 1.3 está na branch feature/estudio-ia-1.3.0. O RPM usa payload compilado nativamente no Fedora 44 (glibc 2.43); a receita declara esse mínimo. O ZIP do job Ubuntu é uma distribuição independente: no teste de compatibilidade, seu backend Qt/xcb falhou no Fedora, e ele não foi usado no RPM final. Compatibilidade com outras distribuições requer execução correspondente.
 
 ## Estrutura portátil
 
