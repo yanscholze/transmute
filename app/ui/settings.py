@@ -28,7 +28,7 @@ class SettingsPane(QWidget):
         body.setSpacing(14)
         body.addWidget(text_label("IA e perfis", "title"))
         body.addWidget(text_label("Configure OpenAI, Gemini e Claude separadamente. O Estúdio usa a IA para planejar e auditar as conversões.", "muted"))
-        self.enabled = QCheckBox("Habilitar planejamento, auditoria e mapeamento com IA")
+        self.enabled = QCheckBox("Habilitar IA neste aplicativo")
         self.enabled.setChecked(self.config.get("enabled", False))
         body.addWidget(self.enabled)
         form = QFormLayout()
@@ -49,7 +49,9 @@ class SettingsPane(QWidget):
         self.key.setEchoMode(QLineEdit.EchoMode.Password)
         self.key.setPlaceholderText("Nova chave; deixe vazio para manter a existente")
         form.addRow("Chave de API", self.key)
-        self.persist = QCheckBox("Guardar no cofre seguro do sistema; se indisponível, somente memória")
+        # Native Windows checkboxes do not wrap their text. Keep the control
+        # short and put the explanation in a wrapping label below the form.
+        self.persist = QCheckBox("Guardar no cofre seguro do sistema")
         form.addRow("Credenciais", self.persist)
         self.timeout = QSpinBox()
         self.timeout.setRange(5, 300)
@@ -60,6 +62,7 @@ class SettingsPane(QWidget):
         self.fallback.setPlaceholderText("Opcional: Gemini, Claude (configure chave/modelo de cada um antes)")
         form.addRow("Fallback consentido, em ordem", self.fallback)
         body.addLayout(form)
+        body.addWidget(text_label("Sem um cofre disponível, as chaves digitadas ficam somente na memória desta sessão.", "muted"))
         self.readiness = text_label("", "notice")
         body.addWidget(self.readiness)
         body.addWidget(button("Importar credenciais de arquivo local…", self.import_credentials))

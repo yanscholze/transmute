@@ -523,7 +523,7 @@ Revisão paginada: correção vira pendência até novo processamento determiní
 Configura provedores/cofre, testa com estrutura sintética e administra perfis locais.
 
 - `SettingsPane` (linha 15)
-  Métodos: `__init__`:16, `provider_changed`:91, `import_credentials`:99, `refresh_readiness`:122, `save`:125, `test_connection`:149, `delete_key`:163, `detect`:170, `refresh_profiles`:173, `view_profile`:179, `remove_profile`:183.
+  Métodos: `__init__`:16, `provider_changed`:94, `import_credentials`:102, `refresh_readiness`:125, `save`:128, `test_connection`:152, `delete_key`:166, `detect`:173, `refresh_profiles`:176, `view_profile`:182, `remove_profile`:186.
 
 ## app/ui/source_picker.py
 
