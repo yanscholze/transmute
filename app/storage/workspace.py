@@ -20,6 +20,7 @@ def save_config(root, config):
 
 
 def initialize(project, state):
+    project, state = Path(project), Path(state)
     root = state / "workspace"
     root.mkdir(parents=True, exist_ok=True, mode=0o700)
     if not (root / "workspace.json").exists():
@@ -35,6 +36,27 @@ def initialize(project, state):
         config.update(theme_mode=preset.get("theme_mode", "light"), logo_path=str(project / preset["logo_path"]) if preset.get("logo_path") else "",
                       logo_size=preset.get("logo_size", 50), logo_opacity=preset.get("logo_opacity", 8), logo_position=preset.get("logo_position", "center"))
         save_config(root, config)
+    # Frozen __file__ points into _MEI..., which is deleted on app exit. Never
+    # persist that path as the active profile: own a durable approved copy.
+    config = workspace_config(root)
+    profile_path = Path(config.get("profile_path", ""))
+    bundled = project / "regras_perfil.json"
+    if not bundled.is_file():
+        bundled = Path(__file__).resolve().parents[1] / "core/rules/profile.json"
+    if "_MEI" in str(profile_path) or profile_path == bundled:
+        from app.core.rules.declarative import validate_profile
+        candidate = profile_path if profile_path.is_file() else bundled
+        profile = json.loads(candidate.read_text(encoding="utf-8"))
+        rules = Path(config.get("rules_path", ""))
+        # Recovery never approves modified prose or replaces an external profile.
+        if rules.is_file() and digest(rules) == profile.get("source_sha256"):
+            validate_profile(profile)
+            folder = root / "managed-rules"
+            folder.mkdir(exist_ok=True)
+            stable = folder / (profile["source_sha256"] + ".json")
+            stable.write_text(json.dumps(profile, ensure_ascii=False, indent=2), encoding="utf-8")
+            config["profile_path"] = str(stable)
+            save_config(root, config)
     return root
 
 

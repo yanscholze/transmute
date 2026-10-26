@@ -1,4 +1,7 @@
 """Credenciais no cofre seguro do SO ou apenas memória; nunca configuração textual."""
+import os
+
+ENVIRONMENT_KEYS = {"OpenAI": ("OPENAI_API_KEY",), "Gemini": ("GEMINI_API_KEY", "GOOGLE_API_KEY"), "Claude": ("ANTHROPIC_API_KEY", "CLAUDE_API_KEY")}
 
 
 class Credentials:
@@ -11,6 +14,9 @@ class Credentials:
     def get(self, provider):
         if provider in self.memory:
             return self.memory[provider]
+        for variable in ENVIRONMENT_KEYS.get(provider, ()):
+            if os.environ.get(variable, "").strip():
+                return os.environ[variable].strip()
         try:
             import keyring
             backend = keyring.get_keyring()

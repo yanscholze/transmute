@@ -43,6 +43,7 @@ def test_named_multi_file_flow_and_saved_pending_correction(qtbot, tmp_path, mak
     window, messages = make_window(qtbot, tmp_path, monkeypatch)
     window.new_import()
     wizard = window.wizard
+    wizard.studio_mode.setChecked(False)  # Explicitly retain the classic workflow regression.
     wizard.name.setText("Cliente sintético — migração")
     wizard.categories["veiculos"].setChecked(True)
     wizard.categories["produtos"].setChecked(True)

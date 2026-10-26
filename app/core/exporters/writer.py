@@ -143,6 +143,7 @@ def report_data(sessions, selections, issues, outputs=None, omitted=None):
                          "layout": session.layout.label, "template": session.layout.path.name,
                          "template_sha256": session.layout.digest, "rules_sha256": session.rules_hash,
                          "profile_sha256": session.profile_hash,
+                         "project_rules": session.project_rules,
                          "statistics": session.stats(),
                          "selected": len(selections[i]) if selections[i] is not None else session.stats()["read"],
                          "partial_selection": "Cenários distintos priorizados, até cinco registros/grupos. Cobertura não garante todos os cenários existentes." if selections[i] is not None else "Base completa",
@@ -207,7 +208,8 @@ def export(sessions, destination, control=None, reports_only=False, detailed_aud
                 for row in session.rows():
                     if selections[i] is None or row["line"] in selections[i]:
                         present.update(k for k, value in row["values"].items() if value != "")
-                columns = [h for h in targets(session.layout) if session.options.columns == "full" or h in present]
+                empty = not session.stats()["read"]
+                columns = [h for h in targets(session.layout) if session.options.columns == "full" or h in present or empty]
                 omitted[session.layout.label] = [h for h in targets(session.layout) if h not in columns]
                 for part in range(1, parts + 1):
                     control.check()
@@ -224,6 +226,12 @@ def export(sessions, destination, control=None, reports_only=False, detailed_aud
                     control.progress(part, f"Gravando parte {part}/{parts}")
         report = report_data(sessions, selections, linked_issues, outputs, omitted)
         save_reports(staging, report)
+        if any(getattr(session, "studio_context_hash", None) for session in sessions):
+            with (staging / "linhagem.jsonl").open("w", encoding="utf-8") as stream:
+                for session in sessions:
+                    for entry in session.lineage():
+                        control.check()
+                        stream.write(json.dumps({"layout": session.layout.label, **entry}, ensure_ascii=False) + "\n")
         if detailed_audit:
             with (staging / "auditoria_sensivel.jsonl").open("w", encoding="utf-8") as stream:
                 for session in sessions:

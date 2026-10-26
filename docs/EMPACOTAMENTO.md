@@ -1,6 +1,8 @@
 # Distribuição, atualizações e personalização
 
-## Instaladores 1.2
+## Instaladores 1.3 e histórico 1.2
+
+A versão 1.3 adiciona o Estúdio IA e corrige referências temporárias de perfil. O build e o teste de instalação abrem o binário duas vezes com o mesmo estado e verificam perfil durável fora de _MEI. Receitas e nomes usam app.__version__. Resultados atuais em VALIDACAO_FINAL.md; números 1.2 abaixo são históricos preservados. Credenciais, .env.local, conversas e fontes de clientes não acompanham o pacote.
 
 O usuário aprovou o dashboard em 22/10/2026 e autorizou .exe/.rpm. Windows deve usar **Windows nativo**, sem Wine. `.github/workflows/build.yml` compila com Python/PyInstaller no runner Windows, cria Setup com NSIS e testa instalação silenciosa, hashes, self-test, abertura Qt e desinstalação preservando dados. O job Linux é independente (`fail-fast: false`). A execução do workflow não publica GitHub Release automaticamente.
 

@@ -46,5 +46,7 @@ install -D -m 0644 %{SOURCE3} %{buildroot}/usr/share/icons/hicolor/scalable/apps
 /usr/share/icons/hicolor/scalable/apps/transmute.svg
 
 %changelog
+* Mon Oct 26 2026 Transmute <https://github.com/yanscholze/transmute> - 1.3.0-1
+- AI conversion studio, source-table picker and persistent packaged rule profile.
 * Thu Oct 22 2026 Transmute <https://github.com/yanscholze/transmute> - 1.2.0-1
 - First native RPM installer; preserve per-user state on removal.

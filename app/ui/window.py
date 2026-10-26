@@ -64,6 +64,8 @@ class Window(QMainWindow):
         self.settings = SettingsPane(store, state, self.run_job, self.notify)
         self.history_page = self.make_history()
         self.detail = ImportDetail(self.root, state, self.layouts, store, self.import_store, self.run_job, self.notify)
+        self.detail.studio.settings_requested.connect(lambda: self.navigate(4))
+        self.detail.studio.library_requested.connect(lambda: self.navigate(2))
         self.detail.changed.connect(self.refresh_overview)
         self.detail.back_requested.connect(lambda: self.navigate(1))
         self.dashboard = Dashboard(self.root, self.import_store, store, self.navigate, self.new_import,
@@ -196,7 +198,7 @@ class Window(QMainWindow):
             self.detail.leave_editor()
         from app.ui.import_wizard import ImportWizard
         if self.wizard is None:
-            self.wizard = ImportWizard(self.import_store, self.layouts, self.notify)
+            self.wizard = ImportWizard(self.import_store, self.layouts, self.notify, self.run_job)
             self.wizard.created.connect(self.import_created)
             self.wizard.cancelled.connect(self.cancel_wizard)
             self.pages.addWidget(self.wizard)
@@ -215,7 +217,8 @@ class Window(QMainWindow):
     def import_created(self, job):
         self.cancel_wizard()
         self.open_import(job["id"])
-        self.detail.process_all()
+        if job.get("mode") != "studio":
+            self.detail.process_all()
 
     def open_import(self, identifier):
         self.detail.leave_editor()
@@ -258,6 +261,9 @@ class Window(QMainWindow):
         self.detail.close_sessions()
         self.detail.layouts = self.layouts
         if self.detail.job:
+            if self.detail.job.get("mode") == "studio":
+                self.detail.job["studio"]["approval"] = None
+                self.detail.studio.context = None
             self.detail.job["status"] = "Aguardando processamento"
             for item in self.detail.job["attachments"]:
                 if item.get("role") != "reference":

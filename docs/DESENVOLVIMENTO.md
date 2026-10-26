@@ -91,3 +91,18 @@ Conexões SQLite usam o contexto de `storage/database.py`: commit/rollback segui
 `Window.run_job` coleta ciclos Python na thread gráfica antes de iniciar a tarefa e suspende a coleta automática até `job_finished`, que restaura o estado anterior. Python 3.14 coletou wrappers Qt aposentados durante parsing XLSX no worker, causando uma falha nativa intermitente; objetos gráficos precisam ser destruídos na thread da UI. Não chamar `gc.collect()` dentro de workers. Referências comuns continuam sendo liberadas normalmente; o adiamento vale apenas para ciclos e dura a operação única em curso.
 
 O entrypoint `run.py` transforma falhas dos modos sintéticos --self-test/--smoke-test em saída com erro e diagnóstico opcional (`CONVERSOR_DIAGNOSTIC_FILE`). Isso evita o diálogo modal do executável windowed do Windows bloqueando o CI. Esse arquivo só é solicitado pelo harness com dados sintéticos; não exporta dados reais da interface.
+
+
+## Manter o Estúdio 1.3
+
+O fluxo novo não altera o formato imports_v1 antigo: mode=classic preserva o caminho anterior; mode=studio separa studio.sources das saídas compostas em attachments. O catálogo fornece IDs opacos estáveis por anexo/aba, nomes de campos e hashes. plan.py define o contrato fechado consumido pelos três providers; alterar a linguagem exige atualizar schema, parse, engine, testes e ESTUDIO_IA.md juntos. Não acrescente interpretação de negócio em widgets.
+
+A composição usa SQLite temporário com índices para consultas muitos-para-um. Cobertura é calculada por linha de origem consumida/consultada/excluída com justificativa; perdas e sobreposição financeira bloqueiam saída. Cada linha composta mantém Cell.kind e origem física; não interponha XLSX textual que esconda fórmulas ou identificadores numéricos. Session.process aceita record_iter/dependencies/project_rules e permanece compatível com o leitor clássico. Regras do projeto usam o mesmo interpretador e não podem sobrepor campos já regulados na biblioteca.
+
+Correções usam row_identity(linhagem + células mapeadas). Mudança de filtro, chave ou conteúdo não pode mover uma correção para outro registro. Correções inválidas não são aplicadas e geram erros visíveis; correções sem linha geram problema global. A tabela de linhagem não contém cópia de todos os valores, mas sessões temporárias contêm dados de revisão. audit_counts conta todas as alterações/problemas sem carregar bases completas em RAM.
+
+A UI conversa por jobs encadeados no controlador único; dispatch espera QThread.finished antes de iniciar a próxima etapa, pois result pode chegar antes da liberação do worker. Consentimento ocorre depois de preparar o payload e antes do request. History recebe instruções, propostas, aprovações, falhas e resultados. O cache visual não autoriza execução; recompute inventory e valide approval. Não reutilize amostras enviadas como autorização para outra consulta.
+
+APIProvider é genérico para resultados estruturados, com diagnósticos públicos limitados a códigos seguros. configuration.py resolve modelos/credenciais sem depender de widgets; environment.py só interpreta variáveis reconhecidas, sem shell. Preserve repr=False em secret. Nenhuma alteração pode criar logs de chaves ou respostas contendo dados. Testes HTTP usam MockTransport; nunca faça teste pago implicitamente ao abrir o app.
+
+initialize copia o perfil aprovado para workspace/managed-rules, nunca guarda _MEI como referência persistente. Só recupera um perfil de runtime desaparecido se o Markdown tiver exatamente o hash aprovado; um perfil customizado ausente continua exigindo revisão. O build e o teste de instalador abrem o binário duas vezes com o mesmo estado para reproduzir o ciclo real do PyInstaller. Não substituir esse teste por uma única abertura na fonte.

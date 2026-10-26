@@ -69,3 +69,10 @@ Uma família nova com lógica específica exige: registrar nome em `Layout.label
 `Options.pdf_confirmed` registra a conferência humana do documento/tabelas. Sem ela, o core adiciona `PDF_CONFERENCIA` como erro global: permite processar/revisar e exportar diagnósticos, mas impede planilha final. Não é default de domínio nem uma regra que o perfil possa desativar. A UI oferece visualizador do original e opção contextual; a responsabilidade de conferir todas as tabelas permanece do operador. Não há OCR ou preenchimento de colunas ausentes por inferência.
 
 Opções gerais do trabalho valem para os arquivos sem uma revisão específica. Revisão individual pode salvar opções próprias, mapeamentos e correções; alterar Regras deste trabalho descarta as opções individuais e exige reprocessamento de todos. Alterar Markdown/perfil/modelos invalida os snapshots usados na exportação. Um arquivo marcado como apoio não passa pela conversão e fica identificado assim no resumo.
+
+
+## Regras de projeto no Estúdio 1.3
+
+Instruções em linguagem natural podem ser traduzidas pela IA em regras declarativas de uma saída do plano. As operações são as mesmas da biblioteca. O operador revisa e aprova a revisão exata; o plano não executa prosa ou código. Regras locais não podem definir paralelamente um campo já regulado pela biblioteca, nem usar defaults para fabricar identificadores. As operações do projeto são aplicadas antes das regras declarativas originais, sem desativar módulos/invariantes da biblioteca. Cada mudança mantém rule/before/after e contagens completas.
+
+Separações CTP/CTR, união de fontes e consultas produtos/estoque pertencem à linguagem de composição (studio/plan.py), não a uma regra escondida de widget ou heurística de nome/sinal. Perguntas pendentes bloqueiam aprovação; valores desconhecidos ficam pendentes. A confirmação antiga não é exigida para criar um projeto em planejamento, mas executar exige um plano aprovado e decisões obrigatórias do perfil.

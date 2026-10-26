@@ -9,7 +9,7 @@ from itertools import islice
 from pathlib import Path
 
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout, QInputDialog, QMessageBox, QStackedWidget, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout, QInputDialog, QMessageBox, QStackedWidget, QTabWidget, QVBoxLayout, QWidget
 
 from app.core.batch import export_import, groups, options_from, process_import
 from app.core.importers.reader import inspect, records, sheets
@@ -55,14 +55,21 @@ class ImportDetail(QWidget):
         box.addLayout(actions)
         self.grid = table()
         self.grid.doubleClicked.connect(self.review_selected)
-        box.addWidget(self.grid, 1)
-        file_actions = QHBoxLayout()
+        from app.ui.studio import StudioPane
+        self.studio = StudioPane(self)
+        self.workspace_tabs = QTabWidget()
+        self.workspace_tabs.addTab(self.studio, "Estúdio de conversão")
+        self.workspace_tabs.addTab(self.grid, "Arquivos e revisão")
+        box.addWidget(self.workspace_tabs, 1)
+        self.file_actions = QWidget()
+        file_actions = QHBoxLayout(self.file_actions)
+        file_actions.setContentsMargins(0, 0, 0, 0)
         file_actions.addWidget(button("Revisar arquivo", self.review_selected))
         file_actions.addWidget(button("Editar título / categoria / vínculo", self.edit_selected))
         file_actions.addWidget(button("Adicionar arquivo…", self.add_file))
         file_actions.addWidget(button("Conferir PDF original", self.view_pdf))
         file_actions.addStretch()
-        box.addLayout(file_actions)
+        box.addWidget(self.file_actions)
         self.notice = text_label("", "notice")
         box.addWidget(self.notice)
         self.pages.addWidget(summary)
@@ -72,7 +79,12 @@ class ImportDetail(QWidget):
         if self.job and self.job["id"] != job["id"]:
             self.close_sessions()
         self.job = job
+        self.workspace_tabs.setTabVisible(0, job.get("mode") == "studio")
+        self.workspace_tabs.setTabText(1, "Tabelas e pendências" if job.get("mode") == "studio" else "Arquivos e revisão")
+        self.workspace_tabs.setCurrentIndex(0 if job.get("mode") == "studio" else 1)
         self.refresh()
+        if job.get("mode") == "studio" and not self.studio.context:
+            self.studio.scan()
 
     def refresh(self):
         if not self.job:
@@ -91,6 +103,10 @@ class ImportDetail(QWidget):
                             "Reprocesse os arquivos para abrir os resultados desta importação." if missing else
                             "Revise os resultados antes de exportar. Originais são preservados; correções manuais e referências são salvas localmente neste trabalho."))
         self.grid.selectionModel().selectionChanged.connect(self.selection_changed)
+        self.studio.bind()
+        self.process_button.setText("Executar plano aprovado" if self.job.get("mode") == "studio" else "Processar arquivos")
+        self.file_actions.setVisible(self.job.get("mode") != "studio")
+        self.notice.setVisible(self.job.get("mode") != "studio" or bool(pending) or bool(self.job.get("link_message")))
 
     def selection_changed(self, *args):
         item = self.selected()
@@ -109,6 +125,11 @@ class ImportDetail(QWidget):
     def process_all(self):
         if not self.job:
             return
+        if self.job.get("mode") == "studio":
+            self.studio.save_instructions()
+            if not self.job.get("studio", {}).get("approval"):
+                self.notify("Revise e aprove um plano no Estúdio antes de transformar as bases. Para começar, escreva suas regras e use Conversa e histórico.")
+                return
         self.close_sessions()
         for item in self.job["attachments"]:
             if item.get("role") != "reference":
@@ -116,17 +137,28 @@ class ImportDetail(QWidget):
                 item.pop("stats", None)
         self.job["status"] = "Em processamento"
         self.save()
-        self.run_job(lambda control: process_import(self.root, self.state, self.job, control), self.processed,
+        from app.studio.engine import execute
+        operation = execute if self.job.get("mode") == "studio" else process_import
+        if self.job.get("mode") == "studio":
+            self.studio.history.append(self.job["id"], "run_started", {"approval": self.job["studio"]["approval"]})
+        self.run_job(lambda control: operation(self.root, self.state, self.job, control), self.processed,
                      "Lendo e tratando os arquivos da importação…", self.processing_failed)
 
     def processing_failed(self, message):
         self.job["status"] = "Interrompida"
+        if self.job.get("mode") == "studio":
+            self.job["studio"]["approval"] = None
+            self.studio.history.append(self.job["id"], "run_failed", {"text": message})
         self.save()
 
     def processed(self, result):
         self.close_sessions()
         self.job, self.sessions = result
+        if self.job.get("mode") == "studio":
+            self.studio.history.append(self.job["id"], "run", {"text": self.job["status"], "audit": self.job["studio"]["last_run"]})
         self.save()
+        if self.job.get("mode") == "studio":
+            self.studio.tabs.setCurrentIndex(5)
 
     def recalculate_status(self):
         pending = any(a.get("role") != "reference" and a.get("status") != "Pronto para exportar" for a in self.job["attachments"])
@@ -159,6 +191,8 @@ class ImportDetail(QWidget):
         box.addWidget(buttons)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.job["options"] = asdict(options.get())
+            if self.job.get("mode") == "studio":
+                self.job["studio"]["approval"] = None
             self.close_sessions()
             for item in self.job["attachments"]:
                 item.pop("options", None)
@@ -180,6 +214,9 @@ class ImportDetail(QWidget):
 
     def add_file(self):
         if self.job:
+            if self.job.get("mode") == "studio":
+                self.studio.add_files()
+                return
             self.edit_item({"id": uuid.uuid4().hex, "family": self.job["categories"][0]})
 
     def edit_item(self, item):
@@ -207,6 +244,13 @@ class ImportDetail(QWidget):
             self.notify("Selecione um arquivo PDF para conferir o documento original.")
 
     def review_selected(self, *args):
+        if self.job and self.job.get("mode") == "studio":
+            item = self.selected()
+            if item and item["id"] in self.sessions:
+                self.workspace_tabs.setCurrentIndex(0)
+                self.studio.result_route.setCurrentIndex(self.studio.result_route.findData(item["id"]))
+                self.studio.tabs.setCurrentIndex(5)
+            return
         item = self.selected()
         if not item:
             self.notify("Selecione um arquivo na lista para revisar.")

@@ -24,6 +24,9 @@ def main():
     parser.add_argument("--self-test-report", type=Path, help="Gravar confirmação JSON após self-test bem-sucedido")
     args = parser.parse_args()
     root, state = args.root or project_root(), state_root()
+    if not getattr(sys, "frozen", False):
+        from app.ai.environment import load_development_env
+        load_development_env(project_root())
     if args.self_test:
         from app.selftest import run
         run(root, state)

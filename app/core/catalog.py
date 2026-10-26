@@ -55,7 +55,10 @@ def verify_rules(root):
     """Recuse prosa alterada sem uma revisão correspondente do perfil."""
     path = rules_path(root)
     config = workspace_config(root)
-    profile = json.loads(Path(config.get("profile_path", Path(__file__).parent / "rules" / "profile.json")).read_text(encoding="utf-8"))
+    profile_path = Path(config.get("profile_path", Path(__file__).parent / "rules" / "profile.json"))
+    if not profile_path.is_file():
+        raise ValueError("O perfil executável das regras não foi encontrado. Abra Biblioteca → Regras e salve uma revisão aprovada. As regras em texto não foram removidas.")
+    profile = json.loads(profile_path.read_text(encoding="utf-8"))
     if not path.is_file() or digest(path) != profile["source_sha256"]:
         raise ValueError("O arquivo de regras está ausente ou mudou desde a revisão. Abra Regras na tela inicial, revise o texto e as regras executáveis e salve uma revisão aprovada.")
     from app.core.rules.declarative import validate_profile

@@ -98,7 +98,7 @@ def build(library=None):
         shutil.copy2(ROOT / "#PLANILHAS DE BASE/VERSOES.md", release / "#PLANILHAS DE BASE/VERSOES.md")
         shutil.copy2(ROOT / "packaging/brand.json", release / "library_preset.json")
     shutil.copytree(ROOT / "docs", release / "docs", ignore=shutil.ignore_patterns("*.png", "originais.sha256.json", "catalogo_modelos.json"))
-    (release / "LEIA-ME.txt").write_text(f"Transmute {__version__}\n\nExtraia todo o ZIP em pasta gravável e abra " + executable + ".\nPython e bibliotecas estão incluídos. Mantenha regras e modelos ao lado do app.\nDashboard reúne atalhos, trabalhos e indicadores.\nBiblioteca contém modelos/regras; Aparência contém temas claro/escuro, destaque e logo.\nOs modelos deste pacote são cópias vazias, sem exemplos. Fontes originais do projeto não foram alteradas.\nEstado portátil fica em .local; não inclua essa pasta ao redistribuir.\nConsulte docs para regras, privacidade, manutenção e validação.\n", encoding="utf-8")
+    (release / "LEIA-ME.txt").write_text(f"Transmute {__version__}\n\nExtraia todo o ZIP em pasta gravável e abra " + executable + ".\nPython e bibliotecas estão incluídos. Mantenha regras e modelos ao lado do app.\nDashboard reúne atalhos, trabalhos e indicadores. O Estúdio de Conversão reúne fontes, regras, conversa com IA, planos aprovados e auditoria.\nBiblioteca contém modelos/regras; Aparência contém temas claro/escuro, destaque e logo.\nOs modelos deste pacote são cópias vazias, sem exemplos. Fontes originais do projeto não foram alteradas.\nEstado portátil fica em .local; não inclua essa pasta ao redistribuir.\nConsulte docs para regras, privacidade, manutenção e validação.\n", encoding="utf-8")
     licenses = release / "licencas"
     licenses.mkdir()
     import importlib.metadata
@@ -113,6 +113,9 @@ def build(library=None):
     test_env = {**env, "CONVERSOR_STATE_DIR": str(ROOT / ".local/build-validation" / name), "QT_QPA_PLATFORM": "offscreen"}
     if not library:
         validate_binary([str(release / executable), "--self-test", "--self-test-report", str(Path(test_env["CONVERSOR_STATE_DIR"]) / "selftest.json")], release, test_env, 120)
+    validate_binary([str(release / executable), "--smoke-test"], release, test_env, 60)
+    # The first onefile process deletes _MEI on exit. Reopening the same state
+    # proves no active rule profile still points into that temporary directory.
     validate_binary([str(release / executable), "--smoke-test"], release, test_env, 60)
     manifest = {str(p.relative_to(release)): digest(p) for p in release.rglob("*") if p.is_file()}
     (release / "SHA256.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")

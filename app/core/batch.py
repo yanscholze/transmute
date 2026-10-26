@@ -120,6 +120,9 @@ def process_import(root, state, job, control=None):
 
 def export_import(job, sessions, destination, control=None, reports_only=False, detailed_audit=False):
     control = control or Control()
+    if not reports_only and job.get("mode") == "studio":
+        from app.studio.engine import verify_export
+        verify_export(job, sessions)
     pending = [a for a in job["attachments"] if a.get("role") != "reference" and (a.get("status") != "Pronto para exportar" or a["id"] not in sessions)]
     if not reports_only and pending:
         raise ValueError("Há arquivos pendentes ou que precisam ser reprocessados. Revise-os ou exporte apenas o relatório da importação.")
@@ -146,6 +149,11 @@ def export_import(job, sessions, destination, control=None, reports_only=False, 
                     shutil.copy2(folder / name, target / name)
         report = {"name": job["name"], "categories": job["categories"], "status": job["status"],
                   "files": [{k: a.get(k) for k in ["title", "family", "role", "source_sheet", "status", "message", "stats"]} for a in job["attachments"]]}
+        if job.get("mode") == "studio":
+            studio = job.get("studio", {})
+            for name, data in [("plano_aprovado.json", studio.get("plan")), ("auditoria_composicao.json", studio.get("last_run")), ("auditoria_ia.json", studio.get("ai_audit"))]:
+                (diagnostics / name).write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+            (diagnostics / "instrucoes_do_projeto.md").write_text(studio.get("instructions", ""), encoding="utf-8")
         (staging / "importacao.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
         lines = [job["name"], "", *[f"{a['title']} — {a.get('status', 'Aguardando')}" for a in job["attachments"]]]
         (staging / "resumo.txt").write_text("\n".join(lines), encoding="utf-8")

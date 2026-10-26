@@ -8,17 +8,18 @@ import json
 import tempfile
 from dataclasses import asdict
 from pathlib import Path
+from collections import Counter
 
 from app.core.catalog import digest, rules_path, verify_rules
 from app.core.importers.reader import records
 from app.core.mapping import validate_mapping
 from app.core.transformation.engine import transform
-from app.models import Control, Issue
+from app.models import Change, Control, Issue
 from app.storage.database import database
 
 
 class Session:
-    def __init__(self, directory, source, layout, decisions, options, root):
+    def __init__(self, directory, source, layout, decisions, options, root, dependencies=None):
         directory.mkdir(parents=True, exist_ok=True, mode=0o700)
         handle = tempfile.NamedTemporaryFile(prefix="review-", suffix=".sqlite3", dir=directory, delete=False)
         self.path = Path(handle.name)
@@ -30,11 +31,14 @@ class Session:
         self.blank_rows = 0
         self.global_issues = []
         self.ai_events = []
+        self.dependencies = dict(dependencies or {})
+        self.project_rules = []
         with self.connect() as db:
             db.executescript("""
                 CREATE TABLE records(line INTEGER PRIMARY KEY, raw TEXT, output TEXT, problems TEXT, changes TEXT, severity TEXT, groupkey TEXT);
                 CREATE INDEX ix_severity ON records(severity);
                 CREATE INDEX ix_group ON records(groupkey);
+                CREATE TABLE lineage(line INTEGER PRIMARY KEY, source_id TEXT, source_line INTEGER, joins TEXT, operations TEXT);
             """)
 
     def connect(self):
@@ -76,9 +80,29 @@ class Session:
             raise ValueError("A origem mudou desde o processamento. Leia e processe novamente.")
         if digest(self.layout.path) != self.layout.digest:
             raise ValueError("O modelo mudou desde a leitura. Reabra o modelo e processe novamente.")
+        if any(not Path(path).is_file() or digest(path) != value for path, value in self.dependencies.items()):
+            raise ValueError("Uma das fontes compostas mudou. Reprocesse o plano antes de exportar.")
+
+    def lineage(self, line=None):
+        with self.connect() as db:
+            query = "SELECT line,source_id,source_line,joins,operations FROM lineage"
+            query += " WHERE line=?" if line is not None else " ORDER BY line"
+            for output_line, source, original, joins, operations in db.execute(query, (line,) if line is not None else ()):
+                yield {"output_line": output_line, "source_id": source, "source_line": original, "joins": json.loads(joins), "operations": json.loads(operations)}
+
+    def audit_counts(self, control=None):
+        """Count every applied rule/problem without copying rows into RAM."""
+        control = control or Control()
+        changes, problems = Counter(), Counter()
+        with self.connect() as db:
+            for packed_changes, packed_problems in db.execute("SELECT changes,problems FROM records"):
+                control.check()
+                changes.update(change["rule"] for change in json.loads(packed_changes))
+                problems.update(problem["code"] for problem in json.loads(packed_problems))
+        return {"transformations": dict(changes), "problems": dict(problems)}
 
 
-def process(root, state, source, layout, decisions, options, control=None):
+def process(root, state, source, layout, decisions, options, control=None, *, record_iter=None, dependencies=None, allow_empty=False, project_rules=None):
     control = control or Control()
     profile = verify_rules(root)
     if digest(layout.path) != layout.digest:
@@ -88,19 +112,36 @@ def process(root, state, source, layout, decisions, options, control=None):
         raise ValueError("Escolha a política de colunas e confirme a leitura dos conflitos.")
     if layout.family == "clientes" and "clients" in profile.get("enabled_modules", ["clients"]) and options.active not in {"yes", "no"}:
         raise ValueError("Responda se todos os clientes devem receber Ativo = ATIVO nesta conversão.")
-    session = Session(state / "sessions", source, layout, decisions, options, root)
+    approved_project_rules = list(project_rules or [])
+    if approved_project_rules:
+        from app.core.rules.declarative import validate_profile
+        # Keep library invariants; project operations run before the existing
+        # declared library rules. Plan validation rejects overlapping fields.
+        profile = {**profile, "rules": approved_project_rules + profile.get("rules", [])}
+        validate_profile(profile)
+    session = Session(state / "sessions", source, layout, decisions, options, root, dependencies)
+    session.project_rules = approved_project_rules
     groupfield = "Número da OS (externo)" if layout.family == "os" else "Número da venda (externo)" if layout.family == "vendas" else ""
     try:
         with session.connect() as db:
-            for n, raw, structural in records(source, control):
+            for record in (records(source, control) if record_iter is None else record_iter):
+                n, raw, structural = record[:3]
                 control.check()
                 if raw is None:
                     session.blank_rows += 1
                     continue
                 values, issues, changes = transform(raw, source, layout, decisions, options, n, profile)
+                if record_iter is not None and not any(values.values()):
+                    issues.append(Issue("ERRO", "SAIDA_SEM_DADOS", "", "A linha ficou sem valores após o plano. Revise os campos mapeados; não exporte registros vazios."))
+                if len(record) == 4:
+                    changes = [Change(c["target"], "", c["value"], "PLANO_CONSTANTE_APROVADA") for c in record[3].get("constants", [])] + changes
                 issues.extend(Issue("ERRO", "ESTRUTURA_LINHA", "", p) for p in structural)
                 severity = "ERRO" if any(i.severity == "ERRO" for i in issues) else "AVISO" if any(i.severity == "AVISO" for i in issues) else "OK"
                 db.execute("INSERT INTO records VALUES(?,?,?,?,?,?,?)", (n, json.dumps({k: asdict(v) for k, v in raw.items()}, ensure_ascii=False), json.dumps(values, ensure_ascii=False), json.dumps([asdict(i) for i in issues], ensure_ascii=False), json.dumps([asdict(c) for c in changes], ensure_ascii=False), severity, values.get(groupfield, "")))
+                if len(record) == 4:
+                    provenance = record[3]
+                    operations = {"fields": provenance.get("fields", []), "constant_fields": [c["target"] for c in provenance.get("constants", [])]}
+                    db.execute("INSERT INTO lineage VALUES(?,?,?,?,?)", (n, provenance["source"], provenance["line"], json.dumps(provenance["joins"]), json.dumps(operations)))
                 if n % 250 == 0:
                     control.progress(n, f"{n:,} linhas lidas".replace(",", "."))
             if layout.variant == "header":
@@ -110,7 +151,9 @@ def process(root, state, source, layout, decisions, options, control=None):
         if digest(source.path) != session.source_hash:
             raise ValueError("A origem mudou durante a leitura. Tente novamente com arquivo estável.")
         if not session.stats()["read"]:
-            raise ValueError("Não há registros após o cabeçalho escolhido.")
+            if not allow_empty:
+                raise ValueError("Não há registros após o cabeçalho escolhido.")
+            session.global_issues.append(Issue("AVISO", "SAIDA_VAZIA", "", "Nenhuma linha atendeu a esta rota; a saída vazia permanece explícita na auditoria."))
         if source.format == "pdf" and not options.pdf_confirmed:
             session.global_issues.append(Issue("ERRO", "PDF_CONFERENCIA", "", "Confira a tabela extraída com a página do PDF original e confirme a revisão antes de exportar."))
         for warning in source.warnings:

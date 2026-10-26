@@ -64,7 +64,7 @@ def prepare_payload(archive, staging, system):
         f"Transmute {__version__} — instalação {system}\n\n"
         "Abra Transmute pelo menu de aplicativos. Python e Qt estão incluídos.\n"
         "Dashboard reúne importações e atalhos; Biblioteca permite escolher modelos e editar regras.\n"
-        "Aparência permite temas claro/escuro, destaque e logo personalizáveis.\n"
+        "O Estúdio reúne fontes, regras, conversa, planos aprovados e auditoria. Aparência permite temas claro/escuro, destaque e logo personalizáveis.\n"
         f"Dados e preferências ficam em {state}, fora da pasta do programa.\n"
         "Atualizar ou desinstalar preserva esses dados. Os modelos distribuídos estão vazios.\n"
         "Consulte docs para regras, privacidade, manutenção e empacotamento.\n",

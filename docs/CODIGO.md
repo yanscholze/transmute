@@ -23,12 +23,31 @@ diretório vazio; Codex/Gemini permanecem detectáveis sem execução habilitada
 - `CLIProvider` (linha 45)
   Métodos: `generate`:51.
 
+## app/ai/configuration.py
+
+Provider configuration independent of widgets; models and keys stay separate.
+
+- `model_for` (linha 13)
+- `configured_providers` (linha 17)
+- `readiness` (linha 33): Presence is reported separately from an actual successful network test.
+
 ## app/ai/credentials.py
 
 Credenciais no cofre seguro do SO ou apenas memória; nunca configuração textual.
 
-- `Credentials` (linha 4): OS credential vault, otherwise process memory only. No plaintext fallback.
-  Métodos: `__init__`:8, `get`:11, `secure`:24, `set`:28, `delete`:41.
+- `Credentials` (linha 7): OS credential vault, otherwise process memory only. No plaintext fallback.
+  Métodos: `__init__`:11, `get`:14, `secure`:30, `set`:34, `delete`:47.
+
+## app/ai/environment.py
+
+Read a developer-owned .env.local without executing it or writing secrets.
+
+The packaged app uses OS environment/keyring. This source-only convenience
+connects the secure key provisioning destination to run.py. Only known API/model
+variables are accepted; PYTHONPATH, commands and unrelated settings are ignored.
+
+- `read_environment_file` (linha 15): Pure local parser used by development startup and explicit UI import.
+- `load_development_env` (linha 38)
 
 ## app/ai/providers.py
 
@@ -37,10 +56,12 @@ Adapters HTTP independentes, canceláveis e sem ferramentas executáveis.
 Somente payload sanitizado e schema chegam aqui. Não há acesso a arquivos de
 clientes; mensagens externas de erro não são registradas em log.
 
-- `Provider` (linha 22)
-  Métodos: `generate`:23.
-- `APIProvider` (linha 27)
-  Métodos: `request`:34, `extract`:52, `generate`:63.
+- `ProviderFailure` (linha 17): Safe diagnostic code; never retains a response body or secret header.
+  Métodos: `__init__`:19.
+- `Provider` (linha 33)
+  Métodos: `generate`:34.
+- `APIProvider` (linha 38)
+  Métodos: `request`:45, `extract`:63, `generate`:79.
 
 ## app/ai/sanitization.py
 
@@ -61,6 +82,20 @@ Schema fechado e validação local independente do fornecedor de IA.
 Fallback somente entre provedores já consentidos; nenhuma tentativa altera dados.
 
 - `suggestions` (linha 6)
+
+## app/ai/studio.py
+
+Structured planning/auditing for all API providers, with explicit payloads.
+
+No provider can execute a recipe, read files on its own, or approve its answer.
+Only this local boundary constructs the content shown in the consent dialog.
+
+- `planning_payload` (linha 40)
+- `request_plan` (linha 62)
+- `audit_schema` (linha 66)
+- `audit_payload` (linha 71)
+- `request_audit` (linha 89)
+- `structured` (linha 100)
 
 ## app/core/batch.py
 
@@ -85,8 +120,8 @@ de dados não são retornados pelo catálogo e nunca viram valores padrão.
 - `digest` (linha 15): Hash incremental usado para provar que as fontes não mudaram.
 - `discover` (linha 24): Leia todas as abas/modelos e preserve cabeçalhos literais e sua ordem.
 - `verify_rules` (linha 54): Recuse prosa alterada sem uma revisão correspondente do perfil.
-- `workspace_config` (linha 66)
-- `rules_path` (linha 71)
+- `workspace_config` (linha 69)
+- `rules_path` (linha 74)
 
 ## app/core/exporters/writer.py
 
@@ -99,8 +134,8 @@ impossível, bloquear é mais seguro do que reorganizar silenciosamente.
 - `plan_parts` (linha 55): Planeje partes por grupo e prove monotonicidade em cada fonte.
 - `write_workbook` (linha 94): Derive cabeçalhos/estilos do modelo e escreva dados como texto literal.
 - `report_data` (linha 127)
-- `save_reports` (linha 160)
-- `export` (linha 182): Nunca sobrescreva fontes/saídas; em erro ou cancelamento retire o staging.
+- `save_reports` (linha 161)
+- `export` (linha 183): Nunca sobrescreva fontes/saídas; em erro ou cancelamento retire o staging.
 
 ## app/core/importers/__init__.py
 
@@ -165,10 +200,10 @@ Sessão de conversão em disco, com snapshots e revisão paginada.
 SQLite evita uma cópia integral da base em RAM. O chamador possui a sessão e
 deve fechá-la; processamento malsucedido remove o arquivo automaticamente.
 
-- `Session` (linha 20)
-  Métodos: `__init__`:21, `connect`:40, `close`:43, `rows`:46, `stats`:66, `verify`:71.
-- `process` (linha 81)
-- `validate_links` (linha 127): Cheque integridade referencial sem excluir/deduplicar nenhum registro.
+- `Session` (linha 21)
+  Métodos: `__init__`:22, `connect`:44, `close`:47, `rows`:50, `stats`:70, `verify`:75, `lineage`:86, `audit_counts`:93.
+- `process` (linha 105)
+- `validate_links` (linha 170): Cheque integridade referencial sem excluir/deduplicar nenhum registro.
 
 ## app/core/transformation/engine.py
 
@@ -258,9 +293,9 @@ necessárias à retomada podem conter dados pessoais e ficam no manifesto local.
 A tabela nova preserva histórico,
 perfis e configurações existentes na mesma base SQLite.
 
-- `now` (linha 18)
-- `ImportStore` (linha 23)
-  Métodos: `__init__`:24, `create`:34, `save`:49, `get`:54, `list`:61.
+- `now` (linha 19)
+- `ImportStore` (linha 24)
+  Métodos: `__init__`:25, `create`:35, `save`:55, `get`:60, `list`:67.
 
 ## app/storage/local.py
 
@@ -268,6 +303,13 @@ Persistência mínima: histórico sem células, perfis estruturais e opções se
 
 - `LocalStore` (linha 8)
   Métodos: `__init__`:9, `connect`:19, `save_profile`:22, `profiles`:26, `delete_profile`:31, `record`:35, `history`:39, `clear_history`:43, `setting`:49, `set_setting`:54.
+
+## app/storage/studio.py
+
+Append-only local conversation/revision/run history; no credential storage.
+
+- `StudioHistory` (linha 6)
+  Métodos: `__init__`:7, `append`:13, `list`:19.
 
 ## app/storage/workspace.py
 
@@ -278,9 +320,57 @@ um novo par Markdown/JSON; o ponteiro só muda depois que ambos são gravados.
 
 - `save_config` (linha 15)
 - `initialize` (linha 22)
-- `import_model` (linha 41)
-- `save_rule_revision` (linha 66)
-- `set_brand` (linha 84)
+- `import_model` (linha 63)
+- `save_rule_revision` (linha 88)
+- `set_brand` (linha 106)
+
+## app/studio/__init__.py
+
+Conversion workspace: source inventory, reviewed recipes and traceable runs.
+
+
+## app/studio/catalog.py
+
+Local source inventory. Never uploads files or confuses inputs with templates.
+
+- `fingerprint` (linha 14)
+- `folder_tables` (linha 18): List individual sheets/tables, including readable failures for the picker.
+- `source_attachments` (linha 41)
+- `inventory` (linha 45): Snapshot IDs bind a recipe to exact input bytes, headers and target models.
+
+## app/studio/engine.py
+
+Execute an approved composition locally, retaining Cell types and row lineage.
+
+SQLite staging/indexes avoid keeping client tables in RAM. Joins are exact and
+many-to-one: duplicate lookup keys fail instead of multiplying/deleting rows.
+Every selected source row must be consumed or explicitly excluded with a reason.
+
+- `cells` (linha 23)
+- `reliable_key` (linha 27)
+- `row_identity` (linha 33): Bind a correction to original lineage and mapped cells, not output position.
+- `execute` (linha 39)
+- `verify_export` (linha 205)
+
+## app/studio/plan.py
+
+Closed recipe language: split, concatenate and exact many-to-one lookup.
+
+Models never provide code. Local validation checks the JSON contract AND every
+source, field, alias and target reference independently of the provider.
+
+- `obj` (linha 15)
+- `arr` (linha 19)
+- `text` (linha 23)
+- `schema` (linha 27)
+- `_check` (linha 42)
+- `decode` (linha 64): Strict JSON at the trust boundary; duplicate keys cannot hide decisions.
+- `parse` (linha 78)
+- `_filters` (linha 135)
+- `matches` (linha 143): Exact text comparison: never infer CTP/CTR from sign, case or a filename.
+- `approve` (linha 155)
+- `review_fingerprint` (linha 160): The review checkbox itself must not invalidate the proposal it confirms.
+- `verify_approval` (linha 167)
 
 ## app/ui/ai_actions.py
 
@@ -360,7 +450,7 @@ O trabalho possui as sessões; editores apenas as usam enquanto estão abertos.
 Revalidação substitui sessões e mantém correções manuais necessárias à retomada.
 
 - `ImportDetail` (linha 25)
-  Métodos: `__init__`:29, `set_job`:71, `refresh`:77, `selection_changed`:95, `selected`:100, `save`:104, `process_all`:109, `processing_failed`:122, `processed`:126, `recalculate_status`:131, `edit_options`:145, `rename`:169, `edit_selected`:176, `add_file`:181, `edit_item`:185, `view_pdf`:202, `review_selected`:209, `open_editor`:241, `review_processed`:279, `leave_editor`:294, `do_export`:313, `exported`:325, `close_sessions`:332.
+  Métodos: `__init__`:29, `set_job`:78, `refresh`:89, `selection_changed`:111, `selected`:116, `save`:120, `process_all`:125, `processing_failed`:147, `processed`:154, `recalculate_status`:163, `edit_options`:177, `rename`:203, `edit_selected`:210, `add_file`:215, `edit_item`:222, `view_pdf`:239, `review_selected`:246, `open_editor`:285, `review_processed`:323, `leave_editor`:338, `do_export`:357, `exported`:369, `close_sessions`:376.
 
 ## app/ui/import_wizard.py
 
@@ -370,7 +460,7 @@ Cada arquivo tem título, categoria e destino visíveis. Os originais são
 referenciados, não movidos nem enviados a serviços externos.
 
 - `ImportWizard` (linha 18)
-  Métodos: `__init__`:22, `identification`:49, `selected_categories`:74, `file_page`:77, `browse`:95, `add_files`:99, `snapshot`:111, `render_files`:120, `populate_models`:146, `remove`:162, `previous`:169, `advance`:179, `update_step`:213, `dragEnterEvent`:220, `dropEvent`:224.
+  Métodos: `__init__`:22, `identification`:50, `selected_categories`:79, `file_page`:82, `browse_folder`:101, `pick_tables`:116, `browse`:127, `add_files`:131, `snapshot`:143, `render_files`:152, `populate_models`:178, `remove`:194, `previous`:201, `advance`:211, `update_step`:245, `dragEnterEvent`:254, `dropEvent`:258.
 
 ## app/ui/imports_home.py
 
@@ -432,9 +522,25 @@ Revisão paginada: correção vira pendência até novo processamento determiní
 
 Configura provedores/cofre, testa com estrutura sintética e administra perfis locais.
 
-- `configured_providers` (linha 15)
-- `SettingsPane` (linha 29)
-  Métodos: `__init__`:30, `provider_changed`:86, `save`:92, `test_connection`:110, `delete_key`:124, `detect`:129, `refresh_profiles`:132, `view_profile`:138, `remove_profile`:142.
+- `SettingsPane` (linha 15)
+  Métodos: `__init__`:16, `provider_changed`:91, `import_credentials`:99, `refresh_readiness`:122, `save`:125, `test_connection`:149, `delete_key`:163, `detect`:170, `refresh_profiles`:173, `view_profile`:179, `remove_profile`:183.
+
+## app/ui/source_picker.py
+
+Pick individual source tables from a directory; failures remain visible.
+
+- `SourcePicker` (linha 8)
+  Métodos: `__init__`:9, `mark`:46, `accept_selection`:51.
+
+## app/ui/studio.py
+
+Per-project AI conversion workspace: sources, rules, revisions and audits.
+
+This widget orchestrates reviewed actions only. Business composition/validation
+lives in studio/; secrets and HTTP construction remain in ai/.
+
+- `StudioPane` (linha 26)
+  Métodos: `__init__`:30, `job`:149, `studio`:152, `bind`:158, `dispatch`:187, `invalidate`:205, `save_instructions`:212, `scan`:220, `scanned`:223, `remember_catalog`:235, `render_sources`:240, `selected_source`:260, `add_folder`:266, `pick_sources`:271, `add_files`:276, `add_entries`:281, `remove_source`:293, `change_role`:301, `providers`:314, `consent`:324, `ask_plan`:344, `send_plan`:364, `proposed`:372, `set_plan_text`:384, `validate_draft`:434, `copy_catalog`:450, `approve_current`:459, `render_history`:480, `render_audit`:492, `restore_revision`:519, `ask_audit`:527, `audited`:540, `review_audit`:547, `load_results`:557, `describe_cell`:566, `move_page`:584, `correct_cell`:588, `clear_corrections`:607.
 
 ## app/ui/style.py
 
@@ -479,7 +585,7 @@ O worker único mantém cancelamento acessível. Aparência nunca reinicia uma
 importação; mudanças da biblioteca exigem nova validação do trabalho.
 
 - `Window` (linha 22)
-  Métodos: `__init__`:23, `make_header`:97, `search_imports`:146, `toggle_theme`:151, `edit_rules_from_dashboard`:158, `refresh_overview`:162, `notify`:166, `navigate`:170, `configure_backdrop`:186, `new_import`:194, `cancel_wizard`:208, `import_created`:215, `open_import`:220, `apply_brand`:228, `reload_library`:252, `run_job`:272, `job_error`:296, `job_finished`:303, `cancel_job`:317, `make_history`:322, `refresh_history`:331, `closeEvent`:339.
+  Métodos: `__init__`:23, `make_header`:99, `search_imports`:148, `toggle_theme`:153, `edit_rules_from_dashboard`:160, `refresh_overview`:164, `notify`:168, `navigate`:172, `configure_backdrop`:188, `new_import`:196, `cancel_wizard`:210, `import_created`:217, `open_import`:223, `apply_brand`:231, `reload_library`:255, `run_job`:278, `job_error`:302, `job_finished`:309, `cancel_job`:323, `make_history`:328, `refresh_history`:337, `closeEvent`:345.
 
 ## scripts/audit_models.py
 
@@ -643,9 +749,51 @@ Fluxo amigável e aparência são verificados em widgets Qt reais, offscreen.
 - `make_window` (linha 12)
 - `test_home_shows_imports_and_wizard_validates` (linha 21)
 - `test_named_multi_file_flow_and_saved_pending_correction` (linha 42)
-- `test_global_color_logo_size_and_reopen` (linha 89)
-- `test_light_and_dark_colors_have_distinct_surfaces` (linha 128)
-- `test_worker_defers_qt_cycle_collection_to_gui_thread` (linha 136): Unreachable widgets must never be finalized by Python's worker GC.
+- `test_global_color_logo_size_and_reopen` (linha 90)
+- `test_light_and_dark_colors_have_distinct_surfaces` (linha 129)
+- `test_worker_defers_qt_cycle_collection_to_gui_thread` (linha 137): Unreachable widgets must never be finalized by Python's worker GC.
+
+## tests/test_studio.py
+
+Synthetic compositions: financial splits, OS unions, stock joins and provenance.
+
+- `library` (linha 23)
+- `project` (linha 37)
+- `recipe` (linha 45)
+- `route` (linha 49)
+- `ready` (linha 57)
+- `close` (linha 62)
+- `test_packaged_rules_survive_deleted_onefile_directory` (linha 67)
+- `test_combined_ctp_ctr_splits_and_keeps_zero_codes` (linha 86)
+- `test_unknown_financial_row_and_overlapping_routes_block_export` (linha 113)
+- `test_product_stock_lookup_and_distinct_services_union` (linha 136)
+- `test_duplicate_lookup_key_fails_without_multiplication` (linha 159)
+- `test_os_headers_parts_and_services_become_linked_outputs` (linha 172)
+- `test_recipe_is_data_not_code_and_approval_is_snapshot_bound` (linha 192)
+- `test_folder_selection_and_append_only_history` (linha 212)
+- `test_empty_destination_and_justified_exclusion_are_explicit` (linha 224)
+- `test_constants_are_audited_and_missing_required_lookup_blocks` (linha 243)
+- `test_unresolved_questions_and_duplicate_json_keys_cannot_be_approved` (linha 262)
+- `test_correction_cannot_move_to_another_record_after_filter_change` (linha 274)
+- `test_project_field_rules_are_executable_and_counted_in_the_audit` (linha 301)
+
+## tests/test_studio_ai.py
+
+Full planning/audit contracts over mocked HTTP; no paid calls or real data.
+
+- `test_each_provider_can_plan_and_audit_through_http` (linha 16)
+- `test_providers_use_independent_environment_credentials_and_models` (linha 50)
+- `test_invalid_or_interrupted_provider_output_never_becomes_a_plan` (linha 70)
+- `test_development_env_is_read_only_whitelisted_and_never_executed` (linha 88)
+
+## tests/test_studio_ui.py
+
+IDE-like workflow exercised with real Qt widgets and a synthetic AI provider.
+
+- `test_new_project_ai_plan_execution_audit_history` (linha 12)
+- `test_folder_picker_requires_explicit_tables` (linha 101)
+- `test_provider_editor_preserves_primary_and_each_credential` (linha 112)
+- `test_provider_controls_remain_accessible_in_small_window` (linha 139)
 
 ## tests/test_ui.py
 

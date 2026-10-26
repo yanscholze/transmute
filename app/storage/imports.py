@@ -7,6 +7,7 @@ A tabela nova preserva histórico,
 perfis e configurações existentes na mesma base SQLite.
 """
 import json
+import copy
 import uuid
 from datetime import datetime
 
@@ -31,7 +32,7 @@ class ImportStore:
                 job["status"] = "Interrompida"
                 self.save(job)
 
-    def create(self, name, categories, attachments, options):
+    def create(self, name, categories, attachments, options, mode="classic"):
         name = name.strip()
         if not name or len(name) > 120:
             raise ValueError("Dê um nome à importação, com até 120 caracteres.")
@@ -39,10 +40,15 @@ class ImportStore:
             raise ValueError("Selecione ao menos uma categoria válida.")
         if not attachments or any(a["family"] not in categories for a in attachments):
             raise ValueError("Adicione arquivos e classifique-os nas categorias selecionadas.")
-        if set(categories) - {a["family"] for a in attachments}:
+        if mode not in {"classic", "studio"}:
+            raise ValueError("Modo de conversão desconhecido.")
+        if mode == "classic" and set(categories) - {a["family"] for a in attachments}:
             raise ValueError("Adicione ao menos um arquivo a cada categoria selecionada.")
         job = {"id": uuid.uuid4().hex, "name": name, "created": now(), "updated": now(), "status": "Aguardando processamento",
                "categories": categories, "attachments": attachments, "options": options, "exports": []}
+        job["mode"] = mode
+        if mode == "studio":
+            job["studio"] = {"instructions": "", "sources": copy.deepcopy(attachments), "plan": None, "approval": None}
         self.save(job)
         return job
 

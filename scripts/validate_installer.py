@@ -43,8 +43,13 @@ def validate(installer):
         screenshot = ROOT / "dist/windows-native.png"
         subprocess.run([str(executable), "--smoke-test", "--screenshot", str(screenshot)], check=True, env=env, timeout=60)
         assert screenshot.stat().st_size > 1000
+        config = json.loads((state / "workspace/workspace.json").read_text(encoding="utf-8"))
+        profile = Path(config["profile_path"])
+        assert profile.is_file() and profile.is_relative_to(state) and "_MEI" not in str(profile)
+        subprocess.run([str(executable), "--smoke-test"], check=True, env=env, timeout=60)
+        assert profile.is_file()
         subprocess.run([str(installed / "Uninstall.exe"), "/S", f"_?={installed}"], check=True, timeout=90)
-        assert not executable.exists() and sentinel.is_file()
+        assert not executable.exists() and sentinel.is_file() and profile.is_file()
         print("WINDOWS NATIVO OK: instalar, hashes, CSV/PDF/QtPdf/XLSX, interface e desinstalar preservando dados.")
 
 

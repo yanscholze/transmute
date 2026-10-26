@@ -1,6 +1,6 @@
 # Conversor de Bases
 
-Aplicativo desktop local para preparar bases para importação em ERP. Windows e Linux, com conversão determinística, revisão dos resultados, relatórios e IA opcional. O dashboard inicial reúne atalhos, últimas importações, indicadores e fontes configuradas. A área Importações mantém trabalhos nomeados, com categorias, arquivos, andamento e resultados próprios. Biblioteca e aparência ficam em áreas separadas.
+Aplicativo desktop local especializado em conversão de bases para ERP. A versão 1.3 reúne fontes, regras em linguagem natural, conversa com IA, planos revisáveis, histórico e auditoria em um Estúdio de Conversão. OpenAI, Gemini e Claude podem propor separações, uniões, cruzamentos e tratamentos; a execução aprovada permanece reproduzível, com originais preservados. O fluxo clássico continua disponível.
 
 Pasta atual do projeto: `/home/yanscholze/Documentos/Company/Conversor` (renomeada de `Importações` em 22/10/2026). As referências da biblioteca local e os scripts do ambiente virtual foram ajustados ao novo caminho. O documento original de regras mantém sua descrição histórica, sem alteração. Backups da configuração anterior ficam em `.local/relocation-backup-*`; logs e artefatos antigos conservam os caminhos de quando foram gerados.
 
@@ -55,7 +55,15 @@ Modelos novos começam em modo genérico. Esse modo preserva valores, aplica int
 
 O editor não interpreta prosa arbitrária como código. Quando mudar o Markdown, revise também as operações executáveis. A aplicação compara hashes e bloqueia exportações processadas com regras anteriores. Consulte [docs/REGRAS.md](docs/REGRAS.md).
 
-## Iniciar e acompanhar uma importação
+## Estúdio de Conversão (1.3)
+
+Use Nova importação com **Planejar no Estúdio IA**. Aponte a pasta dos arquivos recebidos e escolha as abas/tabelas; descreva as regras, converse com a IA, revise o plano e aprove antes de executar. A aplicação suporta CTP/CTR juntos ou separados, OS com peças/serviços separados, produtos enriquecidos com estoque por chave e regras de campo por projeto. Linhas sem destino, ambiguidades e vínculos inválidos não são descartados silenciosamente.
+
+A aba Resultados permite comparar original/transformado e corrigir células com vínculo à origem. Auditoria reúne contagens completas e alterações por regra; a IA pode revisar essas evidências após consentimento. Histórico conserva instruções, propostas, aprovações, falhas e execuções. O guia completo está em [docs/ESTUDIO_IA.md](docs/ESTUDIO_IA.md).
+
+A versão 1.3 também corrige o perfil de regras que podia apontar para um diretório temporário do PyInstaller e desaparecer após fechar o executável. O perfil aprovado passa a ter uma cópia durável no estado do usuário; texto alterado ou perfil customizado ausente não é aprovado automaticamente.
+
+## Fluxo clássico preservado
 
 1. Clique em **Nova importação** no dashboard ou na lista, dê um nome ao trabalho e selecione suas categorias: veículos, clientes, fornecedores, produtos/serviços, OS, vendas, contas ou outra tabela.
 2. Arraste ou selecione todos os arquivos recebidos: XLSX, XLS, CSV/TSV e PDF. Cada arquivo possui **título**, **categoria**, **modelo de saída** e **finalidade**. Há pelo menos um arquivo por categoria escolhida. Um documento de apoio permanece listado, mas não gera registros; essa decisão é explícita.
@@ -96,13 +104,13 @@ Arquivos têm até 10.000 linhas incluindo cabeçalho. A divisão usa os mesmos 
 
 Consulte [docs/PRIVACIDADE.md](docs/PRIVACIDADE.md).
 
-## IA opcional
+## Integrações de IA
 
-OpenAI, Gemini e Claude têm adapters separados; modelo é configurado pelo usuário de acordo com sua conta. Não há modelo pago selecionado automaticamente. Configure provedor, modelo, chave e timeout em **IA e perfis**. Chaves são mantidas em memória ou no cofre seguro do sistema; não existe fallback para arquivo de texto.
+OpenAI, Gemini e Claude têm adapters separados; modelo é configurado pelo usuário de acordo com sua conta. Credenciais podem vir do cofre/memória, ambiente ou importação explícita de arquivo local. Na fonte, run.py também lê .env.local; o pacote não carrega esse arquivo automaticamente. Editar um provedor não troca o principal inadvertidamente. Não há modelo pago selecionado automaticamente. Configure provedor, modelo, chave e timeout em **IA e perfis**. Chaves são mantidas em memória ou no cofre seguro do sistema; não existe fallback para arquivo de texto.
 
 **Testar conexão** pede consentimento e envia apenas uma estrutura sintética. Em **Sugerir com IA**, a aplicação mostra exatamente o payload a enviar. Por padrão, cabeçalhos desconhecidos são ocultos e células viram tipo/comprimento/quantidade de dígitos. Incluir cabeçalhos originais exige opção explícita.
 
-IA apenas sugere mapeamentos JSON. Não recebe arquivos, ferramentas, caminhos ou acesso às bases. Respostas inválidas/conflitantes são rejeitadas. Sugestões nunca substituem decisões já confirmadas. Depois de confirmadas, passam pelo mesmo motor determinístico.
+Na versão 1.3, a IA pode propor e revisar planos declarativos de composição e tratamento, além dos mapeamentos clássicos, e auditar contagens/alterações. Não recebe acesso ao disco nem executa comandos. No Estúdio, valores reais limitados são opcionais e exigem autorização do payload. Respostas inválidas são rejeitadas; aprovação é sempre uma ação explícita do operador. A auditoria amostral da IA não equivale a revisar cada linha nem comprova aceitação no ERP.
 
 Fallback é opcional, em ordem, entre provedores configurados e consentidos no diálogo de envio. Falha externa mantém o mapeamento manual disponível.
 
@@ -150,7 +158,7 @@ O build gera executável, modelos derivados **sem exemplos**, regras e documenta
 
 Veja [docs/EMPACOTAMENTO.md](docs/EMPACOTAMENTO.md), [docs/TESTES.md](docs/TESTES.md) e [docs/VALIDACAO_FINAL.md](docs/VALIDACAO_FINAL.md) para resultados efetivamente obtidos e limitações.
 
-**Etapa atual:** instaladores 1.2.0 gerados e validados no Windows nativo e no Fedora 44. Downloads locais em `dist/releases/1.2.0/`, com guia e SHA256SUMS.txt, prontos para anexar aos assets de uma GitHub Release. Os ZIPs anteriores foram preservados. Foram 87 testes na fonte e 87 no Windows; evidências e limites em [docs/VALIDACAO_FINAL.md](docs/VALIDACAO_FINAL.md). A Release não foi publicada automaticamente.
+**Etapa atual:** Estúdio 1.3 implementado, com validação e novos builds em andamento. A distribuição 1.2 permanece preservada. Estado de cada versão, resultados executados e limites estão em [docs/VALIDACAO_FINAL.md](docs/VALIDACAO_FINAL.md). Nenhuma Release é publicada automaticamente.
 
 ## Arquivos fornecidos preservados
 

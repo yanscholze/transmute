@@ -40,3 +40,12 @@ Execute em máquina Windows e Linux alvo; confira abertura, escala de tela, drag
 87 testes na fonte Fedora e 87 no runner Windows nativo. `test_import_ui.py` verifica também que ciclos de widgets aposentados são coletados na thread gráfica, com GC suspenso no worker e restaurado ao terminar. O self-test da fonte e do executável verifica a liberação dos PDFs ao sair do diretório temporário.
 
 Windows: NSIS instalado e removido no próprio runner, hashes e conversões conferidos, interface capturada com backend `windows`. Fedora 44: RPM instalado/removido em container, executado por usuário comum; self-test, Qt offscreen/xcb em Xvfb, `rpm -V` e preservação de estado passaram. Comandos, versões, workflow e limites em VALIDACAO_FINAL.md. Não executar scripts de instaladores dentro de Wine como substituto dessa validação.
+
+
+## Estúdio 1.3
+
+`test_studio.py` cobre recuperação de perfil temporário sem substituir perfil customizado, CTP/CTR juntos, cobertura e sobreposição, junção exata de estoque, duplicidade de chave, OS com peças/serviços, invariantes de snapshot, pastas/histórico, exclusões explícitas, saídas vazias, constantes auditadas, correções que não migram de registro e regras locais com contagens de alterações.
+
+`test_studio_ai.py` valida planejamento/auditoria por HTTP simulado para OpenAI/Gemini/Claude, isolamento de credenciais/modelos, respostas inválidas/interrompidas e parser de ambiente sem execução. `test_studio_ui.py` percorre criar projeto → consulta consentida simulada → plano → aprovação → execução → auditoria → exportação → correção/reexecução, além da seleção de tabelas, editor de três providers e acessibilidade do rodapé em janela pequena. Os testes clássicos permanecem, com modo clássico explicitamente escolhido onde esse fluxo é o objeto do teste.
+
+Build/instalador abrem o binário duas vezes com o mesmo estado e verificam o perfil durável, reproduzindo a falha reportada no executável. Fakes não comprovam autenticação de APIs; consultar VALIDACAO_FINAL.md para execução efetiva e limites.

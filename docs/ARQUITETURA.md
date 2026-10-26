@@ -28,7 +28,7 @@ Fontes: [Qt for Python](https://doc.qt.io/qtforpython-6/), [PyInstaller: distrib
 
 Na revisão visual posterior à versão 1.1, `dashboard.py` passa a ser a entrada: compõe últimos trabalhos, indicadores e atalhos a partir de metadados existentes. `storage/dashboard.py` define a agregação sem Qt. `navigation.py` mantém a sidebar recolhível; `surfaces.py` e `icons.py` fornecem painéis e vetores locais. `theme.py` separa tema claro/escuro de cor de destaque, com QSS e QPalette. Aparência e navegação não recriam sessões de processamento. O contrato detalhado e a fórmula dos indicadores estão em DASHBOARD.md. A etapa visual foi aprovada; a distribuição 1.2 acrescenta instaladores .exe/.rpm.
 
-`app/ai`: providers independentes para OpenAI, Gemini, Claude e CLI restrita quando comprovada; schema JSON fechado, sanitização central e confirmação antes de envio. Nunca converter registro via modelo. Apenas sugestões com IDs opacos de coluna, sem nomes/células brutas enviados por padrão. Retorno só sugere mapeamentos. Chaves em keyring ou somente memória, nunca config. Fallback explícito por usuário e somente entre provedores consentidos.
+Na versão 1.2, `app/ai` possuía providers independentes para OpenAI, Gemini, Claude e CLI restrita quando comprovada; schema JSON fechado, sanitização central e confirmação antes de envio. Nunca converter registro via modelo. Apenas sugestões com IDs opacos de coluna, sem nomes/células brutas enviados por padrão. Retorno só sugere mapeamentos. Chaves em keyring ou somente memória, nunca config. Fallback explícito por usuário e somente entre provedores consentidos.
 
 ## Ordem de implementação
 
@@ -49,3 +49,14 @@ Modelos desconhecidos são genéricos e usam somente regras declarativas explíc
 O build aceita `--library` para criar distribuição configurada com marca, modelos vazios e perfil aprovado. O preset distribuído usa caminhos relativos; a instalação resolve os caminhos no primeiro uso. Estado, credenciais e histórico não são exportados.
 
 PDF não é convertido em texto corrido para simular linhas. O adapter localiza tabelas e coordenadas com pdfplumber; confirmação humana é uma condição do core (`PDF_CONFERENCIA`), inclusive fora da UI. PDFs sem tabela ficam pendentes ou são classificados explicitamente como apoio. Não há OCR. Fontes: [pdfplumber](https://github.com/jsvine/pdfplumber), [QPdfView](https://doc.qt.io/qtforpython-6/PySide6/QtPdfWidgets/QPdfView.html).
+
+
+## Estúdio IA (1.3)
+
+A mudança de direção foi auditada antes da implementação em AUDITORIA_ESTUDIO_IA.md. O projeto permanece desktop/PySide6, mas o fluxo novo começa pelo planejamento de múltiplas fontes, não pelo processamento automático de um arquivo para um modelo. A conversão clássica é preservada; novos manifestos usam mode=studio e conservam as fontes originais separadas das saídas geradas.
+
+`studio/catalog.py` inventaria fontes/abas, modelos e hashes; `studio/plan.py` define schema fechado, referências, regras e aprovação de contexto; `studio/engine.py` executa filtros, concatenações, consultas por chave e regras aprovadas, com SQLite temporário e cobertura integral de linhas. `storage/studio.py` acrescenta uma tabela de eventos sem apagar dados antigos. `ai/studio.py` constrói os payloads consentidos e valida propostas/auditorias dos providers. `ai/configuration.py` separa configuração de widgets; `ai/environment.py` interpreta somente variáveis conhecidas, sem executar arquivos. `ui/studio.py` integra o espaço de trabalho por projeto e `ui/source_picker.py` permite selecionar tabelas por pasta.
+
+Session recebe iteradores compostos sem perder Cell.kind, conferências ou hashes. Guarda linhagem, mudanças antes/depois e dependências de todas as fontes. Regras locais usam o interpretador existente, antes das operações declarativas da biblioteca; sobreposição de campos regulados é recusada, evitando duas políticas contraditórias. Exportação reconfere o contexto aprovado, modelos e fontes. Correções são vinculadas à origem e às células mapeadas, não somente à posição de saída.
+
+A IA deixa de ser restrita ao mapeamento: planeja e audita, dentro de uma linguagem limitada de operações. Não recebe ferramentas de sistema nem autoridade para aprovar planos. IA sem credenciais continua desabilitada para consultas; o fluxo clássico e edição local de planos continuam utilizáveis. Nenhuma configuração de chave/modelo é tratada como prova de conexão. A política anterior de proibir qualquer plano além de mapeamentos descreve a versão 1.2, não o Estúdio 1.3.

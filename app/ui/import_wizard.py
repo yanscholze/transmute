@@ -19,9 +19,10 @@ class ImportWizard(QWidget):
     created = Signal(object)
     cancelled = Signal()
 
-    def __init__(self, imports, layouts, notify):
+    def __init__(self, imports, layouts, notify, run_job=None):
         super().__init__()
         self.imports, self.layouts, self.notify = imports, layouts, notify
+        self.run_job = run_job
         self.files, self.controls = [], []
         self.setAcceptDrops(True)
         body = QVBoxLayout(self)
@@ -57,6 +58,10 @@ class ImportWizard(QWidget):
         self.name.setAccessibleName("Nome da importação")
         form.addRow("Nome da importação", self.name)
         box.addLayout(form)
+        self.studio_mode = QCheckBox("Planejar no Estúdio IA — fontes juntas, separadas e cruzamentos")
+        self.studio_mode.setChecked(True)
+        self.studio_mode.setToolTip("O projeto abre antes da transformação. Você define as regras, revisa e aprova o plano.")
+        box.addWidget(self.studio_mode)
         box.addWidget(text_label("Quais tabelas serão importadas?", "section"))
         grid = QGridLayout()
         self.categories = {}
@@ -81,6 +86,7 @@ class ImportWizard(QWidget):
         box.addWidget(text_label("Arraste vários arquivos ou selecione-os. Dê um título e confira a categoria e o modelo de saída de cada um. Todas as abas e tabelas reconhecidas serão incluídas.", "drop"))
         actions = QHBoxLayout()
         actions.addWidget(button("Adicionar planilhas ou PDFs…", self.browse))
+        actions.addWidget(button("Escolher tabelas de uma pasta…", self.browse_folder))
         actions.addWidget(button("Remover selecionado", self.remove))
         actions.addStretch()
         box.addLayout(actions)
@@ -91,6 +97,32 @@ class ImportWizard(QWidget):
         box.addWidget(self.grid, 1)
         box.addWidget(text_label("Fonte de dados será convertida. Documento de apoio fica associado ao trabalho para conferência, sem gerar registros.", "muted"))
         return page
+
+    def browse_folder(self):
+        from app.studio.catalog import folder_tables
+        folder = QFileDialog.getExistingDirectory(self, "Pasta dos arquivos recebidos")
+        if not folder:
+            return
+        def task(control):
+            return folder_tables(folder, control)
+        if self.run_job:
+            self.run_job(task, self.pick_tables, "Lendo abas e tabelas da pasta…")
+        else:
+            try:
+                self.pick_tables(task(None))
+            except (ValueError, OSError) as error:
+                self.feedback.setText(str(error))
+
+    def pick_tables(self, entries):
+        from app.ui.source_picker import SourcePicker
+        self.snapshot()
+        dialog = SourcePicker(entries, self)
+        if dialog.exec() == SourcePicker.DialogCode.Accepted:
+            existing = {(f["path"], f.get("source_sheet", "")) for f in self.files}
+            for entry in dialog.selected:
+                if (entry["path"], entry["source_sheet"]) not in existing:
+                    self.files.append({k: v for k, v in {**entry, "family": self.selected_categories()[0]}.items() if k != "error"})
+            self.render_files()
 
     def browse(self):
         files, _ = QFileDialog.getOpenFileNames(self, "Selecionar arquivos recebidos", "", "Planilhas e PDFs (*.xlsx *.xls *.csv *.tsv *.pdf)")
@@ -187,22 +219,22 @@ class ImportWizard(QWidget):
             self.render_files()
         elif step == 1:
             self.snapshot()
-            if not self.files or any(not f["title"].strip() or (f["role"] != "reference" and not f["layout_path"]) for f in self.files):
+            if not self.files or any(not f["title"].strip() or (not self.studio_mode.isChecked() and f["role"] != "reference" and not f["layout_path"]) for f in self.files):
                 self.feedback.setText("Adicione arquivos e preencha título, categoria e modelo de saída para as fontes de dados.")
                 return
             missing = set(self.selected_categories()) - {f["family"] for f in self.files}
-            if missing:
+            if missing and not self.studio_mode.isChecked():
                 self.feedback.setText("Faltam arquivos para: " + ", ".join(FAMILIES[k] for k in missing))
                 return
             self.options.configure_categories(self.selected_categories(), any(f["path"].lower().endswith(".pdf") for f in self.files))
         else:
             options = self.options.get()
-            if not options.acknowledge_conflicts or ("clientes" in self.selected_categories() and not options.active):
+            if not self.studio_mode.isChecked() and (not options.acknowledge_conflicts or ("clientes" in self.selected_categories() and not options.active)):
                 self.feedback.setText("Confirme as regras da importação e a opção ATIVO quando houver clientes.")
                 return
             try:
                 attachments = [{**f, "id": uuid.uuid4().hex, "status": "Aguardando", "group": "principal"} for f in self.files]
-                job = self.imports.create(self.name.text(), self.selected_categories(), attachments, asdict(options))
+                job = self.imports.create(self.name.text(), self.selected_categories(), attachments, asdict(options), "studio" if self.studio_mode.isChecked() else "classic")
                 self.created.emit(job)
             except ValueError as error:
                 self.feedback.setText(str(error))
@@ -214,6 +246,8 @@ class ImportWizard(QWidget):
         step = self.pages.currentIndex()
         self.back.setText("Cancelar" if step == 0 else "Voltar")
         self.next.setText(["Escolher arquivos", "Conferir e iniciar", "Iniciar importação"][step])
+        if step == 2 and self.studio_mode.isChecked():
+            self.next.setText("Abrir Estúdio de conversão")
         self.steps.setText(f"Etapa {step + 1} de 3 · " + ["Nome e tabelas", "Arquivos por categoria", "Regras desta importação"][step])
         self.feedback.setText(["Escolha as tabelas que fazem parte deste trabalho.", "Cada arquivo permanece na origem; os dados não são enviados à internet.", "O processamento é local. Pendências serão mostradas para revisão antes da exportação."][step])
 
